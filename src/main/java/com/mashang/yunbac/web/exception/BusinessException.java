@@ -1,6 +1,6 @@
 package com.mashang.yunbac.web.exception;
 
-import com.mashang.yunbac.web.common.ErrorCode;
+import com.mashang.yunbac.web.entity.enums.ErrorCode;
 
 /**
  * 自定义异常类

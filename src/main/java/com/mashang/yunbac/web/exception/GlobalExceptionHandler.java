@@ -1,6 +1,6 @@
 package com.mashang.yunbac.web.exception;
 
-import com.mashang.yunbac.web.common.ErrorCode;
+import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;

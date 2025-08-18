@@ -1,6 +1,6 @@
 package com.mashang.yunbac.web.utils;
 
-import com.mashang.yunbac.web.common.ErrorCode;
+import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -27,21 +27,21 @@ public class ResultTUtil<T> {
 
     //响应为成功
     public ResultTUtil<T> success(String str) {
-        return (new ResultTUtil<T>(str + "成功!", 0, null));
+        return (new ResultTUtil<T>(str, 0, null));
     }
 
     //响应为成功的重载方法
     public ResultTUtil<T> success(String str, T object) {
-        return (new ResultTUtil(str + "成功!", 0, object));
+        return (new ResultTUtil(str, 0, object));
     }
 
     //响应为失败
     public ResultTUtil<T> error(String str) {
-        return (new ResultTUtil(str + "失败!", 500, null));
+        return (new ResultTUtil(str, 500, null));
     }
 
     public ResultTUtil<T> error(String str, T obj) {
-        return (new ResultTUtil(str + "失败!", 500, obj));
+        return (new ResultTUtil(str, 500, obj));
     }
 
     //响应为失败

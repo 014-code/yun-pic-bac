@@ -26,18 +26,18 @@ public class RowsTUtil<T> {
     @ApiModelProperty("响应内容")
     private List<T> rows;//响应内容
     @ApiModelProperty("总记录数")
-    private Integer total;//总记录数
+    private Long total;//总记录数
 
 
     //响应为成功
-    public RowsTUtil<T> success(String str, Integer cont, List<T> object){
-        return (new RowsTUtil<T>(0, str + "成功!",object, cont));
+    public RowsTUtil<T> success(String str, Long cont, List<T> object) {
+        return (new RowsTUtil<T>(0, str, object, cont));
 
     }
 
     //响应为失败
-    public RowsTUtil<T> error(String str, Integer cont, List<T> object){
-        return (new RowsTUtil<T>(500, str + "失败!",object, cont));
+    public RowsTUtil<T> error(String str, Long cont, List<T> object) {
+        return (new RowsTUtil<T>(500, str, object, cont));
 
     }
 }
