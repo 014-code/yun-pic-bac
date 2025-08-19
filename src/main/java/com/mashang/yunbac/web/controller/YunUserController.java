@@ -1,5 +1,8 @@
 package com.mashang.yunbac.web.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.mashang.yunbac.web.annotation.AuthCheck;
 import com.mashang.yunbac.web.constant.UserConstant;
@@ -86,28 +89,35 @@ public class YunUserController {
     public ResultTUtil cancellation(HttpServletRequest request) {
         String token = (String) request.getAttribute("Authorization");
         //清空token
-        Boolean b = JWTUtil.invalidateToken(token);
-        if (b) {
-            return new ResultTUtil().success("注销");
-        } else {
-            return new ResultTUtil().error("注销");
-        }
+        JWTUtil.invalidateToken(token);
+        return new ResultTUtil().success("注销成功");
     }
 
     @ApiOperation("获取用户列表")
     @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public RowsTUtil<YunUserVo> listUser(@Validated PageInfoParam pageInfo) {
-        ArrayList<YunUserVo> yunUserVos = new ArrayList<>();
+    public RowsTUtil<YunUserVo> listUser(@Validated GetUserListParam pageInfo, @Validated PageInfoParam param) {
+        System.out.println(pageInfo);
+        System.out.println(param);
+        // 开启分页
+        PageHelper.startPage(param.getPageNum(), param.getPageSize());
         //后台列表根据多个条件查询-todo 增加请求参数与qw条件过滤
-        List<YunUser> list = yunUserService.list();
+        QueryWrapper<YunUser> yunUserVoQueryWrapper = new QueryWrapper<>();
+        yunUserVoQueryWrapper.like(pageInfo.getAccount() != null, "account", pageInfo.getAccount());
+        yunUserVoQueryWrapper.like(pageInfo.getUserName() != null, "user_name", pageInfo.getUserName());
+        List<YunUser> list = yunUserService.list(yunUserVoQueryWrapper);
+        System.out.println(list);
+        // 获取分页信息
+        PageInfo<YunUser> pageList = new PageInfo<>(list);
         //转化脱敏
-        BeanUtils.copyProperties(list, yunUserVos);
-        PageInfo<YunUserVo> pages = new PageInfo(yunUserVos);
-        pages.setPageNum(pageInfo.getPageNum());
-        pages.setPageSize(pageInfo.getPageSize());
-        pages.setTotal(yunUserVos.size());
-        return new RowsTUtil<YunUserVo>().success("查询", pages.getTotal(), pages.getList());
+        // 转换为VO列表
+        ArrayList<YunUserVo> yunUserVos = new ArrayList<>();
+        for (YunUser yunUser : list) {
+            YunUserVo vo = new YunUserVo();
+            BeanUtil.copyProperties(yunUser, vo);
+            yunUserVos.add(vo);
+        }
+        return new RowsTUtil<YunUserVo>().success("查询成功", pageList.getTotal(), yunUserVos);
     }
 
     @ApiOperation("创建用户")
@@ -130,9 +140,9 @@ public class YunUserController {
         yunUser.setUpdateTime(new Date());
         boolean save = yunUserService.save(yunUser);
         if (save) {
-            return new ResultTUtil<>().success("创建用户");
+            return new ResultTUtil<>().success("创建用户成功");
         } else {
-            return new ResultTUtil<>().error("创建用户");
+            return new ResultTUtil<>().error("创建用户成功");
         }
     }
 
@@ -145,7 +155,7 @@ public class YunUserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户id不能为空!");
         }
         YunUser byId = yunUserService.getById(userId);
-        return new ResultTUtil<YunUser>().success("查询", byId);
+        return new ResultTUtil<YunUser>().success("查询成功", byId);
     }
 
     @ApiOperation("修改用户")
@@ -170,9 +180,9 @@ public class YunUserController {
         yunUser.setUpdateTime(new Date());
         boolean save = yunUserService.updateById(yunUser);
         if (save) {
-            return new ResultTUtil<>().success("修改用户");
+            return new ResultTUtil<>().success("修改用户成功");
         } else {
-            return new ResultTUtil<>().error("修改用户");
+            return new ResultTUtil<>().error("修改用户成功");
         }
     }
 
@@ -187,7 +197,7 @@ public class YunUserController {
         YunUser byId = yunUserService.getById(userId);
         //脱敏
         BeanUtils.copyProperties(byId, yunUserVo);
-        return new ResultTUtil<YunUserVo>().success("查询", yunUserVo);
+        return new ResultTUtil<YunUserVo>().success("查询成功", yunUserVo);
     }
 
     @ApiOperation("删除用户")
@@ -200,9 +210,9 @@ public class YunUserController {
         }
         boolean b = yunUserService.removeById(userId);
         if (b) {
-            return new ResultTUtil<>().success("删除");
+            return new ResultTUtil<>().success("删除成功");
         } else {
-            return new ResultTUtil<>().error("删除");
+            return new ResultTUtil<>().error("删除成功");
         }
     }
 

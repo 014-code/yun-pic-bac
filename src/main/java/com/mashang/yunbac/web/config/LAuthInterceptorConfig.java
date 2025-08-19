@@ -10,6 +10,6 @@ public class LAuthInterceptorConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthInterceptor()).addPathPatterns("/*").excludePathPatterns("/user/login", "/user/register", "/doctor/notify", "/api/doc.html#/home", "/ws/**", "/swagger-ui.html", "/swagger-resources/**", "/*/api-docs", "/druid/**", "/**/*.html");
+        registry.addInterceptor(new AuthInterceptor()).addPathPatterns("/**").excludePathPatterns("/user/login", "/user/register", "/doc.html", "/ws/**", "/swagger-ui.html", "/swagger-resources/**", "/*/api-docs", "/druid/**", "/**/*.html");
     }
 }

@@ -22,28 +22,51 @@ public class AuthInterceptor implements HandlerInterceptor {
      * @throws Exception
      */
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 放行预检请求
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        String requestUri = request.getRequestURI();
+        // 白名单路径（无需登录）
+        if (requestUri.startsWith("/api/user/login")
+                || requestUri.startsWith("/api/user/register")
+                || requestUri.startsWith("/api/doc.html")
+                || requestUri.startsWith("/api/swagger-ui.html")
+                || requestUri.startsWith("/api/swagger-resources")
+                || requestUri.startsWith("/api/webjars/")
+                || requestUri.matches(".*/api-docs.*")
+                || requestUri.startsWith("/api/error")) {
+            return true;
+        }
+
         // 从头部获取我们的token
         String token = request.getHeader("Authorization");
-        // 设置返回值类型
-        response.setContentType("text/plain;charset=utf-8");
-        // 如果token是空的就说明没有token，没有权限
-        if (token == null || "".equals(token)) {
-            response.getWriter().write("没有token");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=utf-8");
+
+        if (token == null || token.trim().isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"code\":401,\"message\":\"未登录或缺少token\"}");
             return false;
         }
-        boolean b = JWTUtil.verifyToken(token);
-        if (!b) {
-            response.getWriter().write("用户认证失败");
+
+        boolean valid = JWTUtil.verifyToken(token);
+        if (!valid) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"code\":401,\"message\":\"用户认证失败\"}");
             return false;
         }
-        // 统一处理用户id不存在的情况
+
         Long userId = JWTUtil.getUserId(token);
         if (userId == null) {
-            response.getWriter().write("用户不存在或者过期");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"code\":401,\"message\":\"用户不存在或token过期\"}");
             return false;
         }
+
         request.setAttribute("Authorization", token);
-        return b;
+        return true;
     }
 
     @Override

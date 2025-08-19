@@ -77,8 +77,8 @@ public class YunUserServiceImpl extends ServiceImpl<YunUserMapper, YunUser> impl
         String newPassword = DigestUtils.md5DigestAsHex((SALT + loginParam.getPassword()).getBytes());
         //查询一致的结果
         QueryWrapper<YunUser> qw = new QueryWrapper<>();
-        qw.eq("user_account", loginParam.getAccount());
-        qw.eq("user_password", newPassword);
+        qw.eq("account", loginParam.getAccount());
+        qw.eq("password", newPassword);
         YunUser user = yunUserMapper.selectOne(qw);
         if (user == null) throw new BusinessException(ErrorCode.SYSTEM_ERROR, "账号或密码错误!");
         //创建token

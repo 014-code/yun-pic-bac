@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
  * 分页对象实体类
  */
 @Data
-@ApiModel
 public class PageInfoParam {
 
     @ApiModelProperty(value = "条数", required = true)
