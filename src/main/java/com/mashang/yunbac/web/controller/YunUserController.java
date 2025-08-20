@@ -8,8 +8,9 @@ import com.mashang.yunbac.web.annotation.AuthCheck;
 import com.mashang.yunbac.web.constant.UserConstant;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
-import com.mashang.yunbac.web.entity.params.*;
-import com.mashang.yunbac.web.entity.vo.YunUserVo;
+import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
+import com.mashang.yunbac.web.entity.params.user.*;
+import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
 import com.mashang.yunbac.web.exception.BusinessException;
 import com.mashang.yunbac.web.service.YunUserService;
 import com.mashang.yunbac.web.utils.JWTUtil;
@@ -17,12 +18,9 @@ import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.DigestUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -97,8 +95,6 @@ public class YunUserController {
     @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public RowsTUtil<YunUserVo> listUser(@Validated GetUserListParam pageInfo, @Validated PageInfoParam param) {
-        System.out.println(pageInfo);
-        System.out.println(param);
         // 开启分页
         PageHelper.startPage(param.getPageNum(), param.getPageSize());
         //后台列表根据多个条件查询-todo 增加请求参数与qw条件过滤

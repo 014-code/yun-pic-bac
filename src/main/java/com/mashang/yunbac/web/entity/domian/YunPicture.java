@@ -61,7 +61,7 @@ public class YunPicture {
     /**
      * 图片宽高比
      */
-    private String picScale;
+    private Double picScale;
     /**
      * 图片格式
      */

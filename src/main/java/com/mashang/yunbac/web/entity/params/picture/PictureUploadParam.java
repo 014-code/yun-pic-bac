@@ -1,4 +1,4 @@
-package com.mashang.yunbac.web.entity.params;
+package com.mashang.yunbac.web.entity.params.picture;
 
 import lombok.Data;
 

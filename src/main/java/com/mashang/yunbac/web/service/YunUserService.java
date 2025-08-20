@@ -2,8 +2,8 @@ package com.mashang.yunbac.web.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.mashang.yunbac.web.entity.domian.YunUser;
-import com.mashang.yunbac.web.entity.params.LoginParam;
-import com.mashang.yunbac.web.entity.params.RegisterParam;
+import com.mashang.yunbac.web.entity.params.user.LoginParam;
+import com.mashang.yunbac.web.entity.params.user.RegisterParam;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 
 /**

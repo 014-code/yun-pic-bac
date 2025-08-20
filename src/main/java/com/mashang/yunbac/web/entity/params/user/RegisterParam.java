@@ -1,4 +1,4 @@
-package com.mashang.yunbac.web.entity.params;
+package com.mashang.yunbac.web.entity.params.user;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -13,11 +13,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @ApiModel
-public class LoginParam {
+public class RegisterParam {
 
     @ApiModelProperty(value = "账号", required = true)
     private String account;
     @ApiModelProperty(value = "密码", required = true)
     private String password;
+    @ApiModelProperty(value = "再次输入密码", required = true)
+    private String rePassword;
+    @ApiModelProperty(value = "用户名称", required = false)
+    private String userName;
 
 }

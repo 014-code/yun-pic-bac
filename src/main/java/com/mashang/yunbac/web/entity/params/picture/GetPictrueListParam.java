@@ -1,10 +1,11 @@
-package com.mashang.yunbac.web.entity.params;
+package com.mashang.yunbac.web.entity.params.picture;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * (YunUser)实体类
@@ -15,17 +16,32 @@ import org.jetbrains.annotations.NotNull;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PictrueParam {
-    /**
-     * 图片地址
-     */
-    @ApiModelProperty("图片地址")
-    private String url;
+public class GetPictrueListParam {
     /**
      * 图片名称
      */
     @ApiModelProperty("图片名称")
     private String name;
+    /**
+     * 图片格式
+     */
+    @ApiModelProperty("图片格式")
+    private String picFormat;
+    /**
+     * 简介
+     */
+    @ApiModelProperty("简介")
+    private String introduction;
+    /**
+     * 分类
+     */
+    @ApiModelProperty("分类")
+    private String category;
+    /**
+     * 标签-json
+     */
+    @ApiModelProperty("标签-json")
+    private List<String> tags;
     /**
      * 图片体积
      */
@@ -47,10 +63,10 @@ public class PictrueParam {
     @ApiModelProperty("图片宽高比")
     private String picScale;
     /**
-     * 图片格式
+     * 搜索词
      */
-    @ApiModelProperty("图片格式")
-    private String picFormat;
+    @ApiModelProperty("搜索词(同时搜索名称简介)")
+    private String seacherText;
 
 }
 

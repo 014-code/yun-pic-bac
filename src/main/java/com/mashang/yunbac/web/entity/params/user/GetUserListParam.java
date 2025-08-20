@@ -1,11 +1,7 @@
-package com.mashang.yunbac.web.entity.params;
+package com.mashang.yunbac.web.entity.params.user;
 
-import com.github.pagehelper.page.PageParams;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 
 @Data
 public class GetUserListParam {

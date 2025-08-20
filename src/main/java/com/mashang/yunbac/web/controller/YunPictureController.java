@@ -1,28 +1,42 @@
 package com.mashang.yunbac.web.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.mashang.yunbac.web.annotation.AuthCheck;
 import com.mashang.yunbac.web.constant.UserConstant;
+import com.mashang.yunbac.web.entity.domian.YunPicture;
+import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
-import com.mashang.yunbac.web.exception.BusinessException;
-import com.mashang.yunbac.web.manger.CosManger;
-import com.mashang.yunbac.web.utils.JWTUtil;
+import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
+import com.mashang.yunbac.web.entity.params.picture.GetPictrueListParam;
+import com.mashang.yunbac.web.entity.params.picture.UpdatePictrueParam;
+import com.mashang.yunbac.web.entity.vo.common.YunCategoryTagVo;
+import com.mashang.yunbac.web.entity.vo.picture.YunPictureUserVo;
+import com.mashang.yunbac.web.entity.vo.picture.YunPictureUserVos;
+import com.mashang.yunbac.web.entity.vo.picture.YunPictureVo;
+import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
+import com.mashang.yunbac.web.exception.ThrowUtils;
+import com.mashang.yunbac.web.service.impl.YunUserServiceImpl;
 import com.mashang.yunbac.web.utils.ResultTUtil;
-import com.qcloud.cos.model.COSObject;
-import com.qcloud.cos.model.COSObjectInputStream;
-import com.qcloud.cos.utils.IOUtils;
+import com.mashang.yunbac.web.utils.RowsTUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.mashang.yunbac.web.service.YunPictureService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.util.prefs.BackingStoreException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * (YunPicture)表控制层
@@ -40,72 +54,153 @@ public class YunPictureController {
      */
     @Resource
     private YunPictureService yunPictureService;
-    @Resource
-    private CosManger cosManger;
+    @Autowired
+    private YunUserServiceImpl yunUserService;
 
-    @ApiOperation("测试文件上传")
-    @PostMapping("/upload")
+    @ApiOperation("上传图片(并返回图片信息)-管理员")
+    @PostMapping("/uploadPic")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public ResultTUtil<String> upload(@RequestPart("file") MultipartFile file) {
-        //拿到文件名称和路径
-        String originalFilename = file.getOriginalFilename();
-        String path = String.format("/test/%s", originalFilename);
-        //空文件
-        File files = null;
-        try {
-            //创建空文件模板
-            files = File.createTempFile(path, null);
-            //把MultipartFile类型转化成File
-            file.transferTo(files);
-            //通用上传
-            cosManger.putObject(path, files);
-            //返回图片地址
-            return new ResultTUtil().success(path);
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件上传失败");
-        } finally {
-            if (files != null) {
-                //删除临时文件
-                boolean delete = files.delete();
-                if (!delete) {
-                    log.error("删除临时文件失败");
-                }
-            }
-        }
+    public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, YunUser yunUser) {
+        return yunPictureService.uploadPic(file, picId, yunUser);
     }
 
-    @ApiOperation("测试文件下载")
-    @PostMapping("/download")
+    @ApiOperation("分页查询图片列表-管理员")
+    @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public void download(String filePath, HttpServletRequest request, HttpServletResponse response) {
-        //创建cos输入流对象
-        COSObjectInputStream cosObjectInputStream = null;
-        try {
-            //调用通用下载
-            COSObject obj = cosManger.getObj(filePath);
-            //下载后的流对象
-            cosObjectInputStream = obj.getObjectContent();
-            //处理成字节流
-            byte[] byteArray = IOUtils.toByteArray(cosObjectInputStream);
-            //设置像一头
-            response.setContentType("application/octet-stream;charset=UTF-8");
-            response.setHeader("content-Disposition", "attachment; filename=" + filePath);
-            //写入响应头
-            response.getOutputStream().write(byteArray);
-            response.getOutputStream().flush();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件下载失败");
-        } finally {
-            try {
-                if (cosObjectInputStream != null) {
-                    cosObjectInputStream.close();
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+    public RowsTUtil<YunPicture> list(@Validated PageInfoParam pageInfoParam, @Validated GetPictrueListParam getPictrueListParam) {
+        // 开启分页
+        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        //后台列表根据多个条件查询
+        QueryWrapper<YunPicture> yunUserVoQueryWrapper = new QueryWrapper<>();
+        yunUserVoQueryWrapper.like(getPictrueListParam.getCategory() != null, "category", getPictrueListParam.getCategory());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getName() != null, "name", getPictrueListParam.getName());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getIntroduction() != null, "introduction", getPictrueListParam.getIntroduction());
+        yunUserVoQueryWrapper.eq(getPictrueListParam.getPicFormat() != null, "pic_format", getPictrueListParam.getPicFormat());
+        yunUserVoQueryWrapper.eq(getPictrueListParam.getPicSize() != null, "pic_size", getPictrueListParam.getPicSize());
+        yunUserVoQueryWrapper.eq(getPictrueListParam.getPicWidth() != null, "pic_width", getPictrueListParam.getPicWidth());
+        yunUserVoQueryWrapper.eq(getPictrueListParam.getPicHeight() != null, "pic_height", getPictrueListParam.getPicHeight());
+        yunUserVoQueryWrapper.eq(getPictrueListParam.getPicScale() != null, "pic_scale", getPictrueListParam.getPicScale());
+        //json数组查询
+        if (CollUtil.isNotEmpty(getPictrueListParam.getTags())) {
+            for (String tag : getPictrueListParam.getTags()) {
+                yunUserVoQueryWrapper.like("tags", "\"" + tag + "\"");
             }
         }
+        List<YunPicture> list = yunPictureService.list(yunUserVoQueryWrapper);
+        // 获取分页信息
+        PageInfo<YunPicture> pageList = new PageInfo<>(list);
+        return new RowsTUtil<YunPicture>().success("查询成功", pageList.getTotal(), pageList.getList());
     }
+
+    @ApiOperation("查询图片详情-管理员")
+    @GetMapping("/detail")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public ResultTUtil<YunPictureUserVo> detail(Long picId) {
+        YunPictureUserVo yunPictureUserVo = new YunPictureUserVo();
+        YunPicture byId = yunPictureService.getById(picId);
+        ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        //关联用户信息
+        YunUser user = yunUserService.getById(byId.getUserId());
+        yunPictureUserVo.setYunPicture(byId);
+        yunPictureUserVo.setYunUser(user);
+        return new ResultTUtil<YunPictureUserVo>().success("查询成功", yunPictureUserVo);
+    }
+
+    @ApiOperation("更新图片信息-管理员")
+    @PutMapping("/update")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public ResultTUtil update(@Validated UpdatePictrueParam updatePictrueParam) {
+        ThrowUtils.throwIf(updatePictrueParam.getPicId() == null, ErrorCode.NOT_FOUND_ERROR);
+        YunPicture yunPicture = new YunPicture();
+        BeanUtils.copyProperties(updatePictrueParam, yunPicture);
+        String jsonStr = JSONUtil.toJsonStr(updatePictrueParam.getTags());
+        yunPicture.setTags(jsonStr);
+        boolean b = yunPictureService.updateById(yunPicture);
+        ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
+        return new ResultTUtil<>().success("修改成功");
+    }
+
+    @ApiOperation("删除图片-管理员")
+    @DeleteMapping("/del/{picId}")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public ResultTUtil del(@PathVariable Long picId) {
+        YunPicture byId = yunPictureService.getById(picId);
+        ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        boolean b = yunPictureService.removeById(byId);
+        ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
+        return new ResultTUtil<>().success("删除成功");
+    }
+
+    @ApiOperation("分页获取图片")
+    @PostMapping("/list/vo")
+    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public RowsTUtil<YunPictureVo> listVo(@Validated PageInfoParam pageInfoParam, @Validated GetPictrueListParam getPictrueListParam) {
+        // 开启分页
+        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        //后台列表根据多个条件查询
+        QueryWrapper<YunPicture> yunUserVoQueryWrapper = new QueryWrapper<>();
+        yunUserVoQueryWrapper.like(getPictrueListParam.getCategory() != null, "category", getPictrueListParam.getCategory());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getName() != null, "name", getPictrueListParam.getName());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getTags() != null, "tags", getPictrueListParam.getTags());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getIntroduction() != null, "introduction", getPictrueListParam.getIntroduction());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getPicFormat() != null, "pic_format", getPictrueListParam.getPicFormat());
+        List<YunPicture> list = yunPictureService.list(yunUserVoQueryWrapper);
+        // 获取分页信息
+        PageInfo<YunPicture> pageList = new PageInfo<>(list);
+        //转化脱敏
+        // 转换为VO列表
+        List<YunPictureVo> yunPictureVos = new ArrayList<>();
+        for (YunPicture yunUser : list) {
+            YunPictureVo vo = new YunPictureVo();
+            BeanUtil.copyProperties(yunUser, vo);
+            yunPictureVos.add(vo);
+        }
+        return new RowsTUtil<YunPictureVo>().success("查询成功", pageList.getTotal(), yunPictureVos);
+    }
+
+    @ApiOperation("查询图片详情")
+    @GetMapping("/detail/vo")
+    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil<YunPictureUserVos> detailVo(Long picId) {
+        YunPictureUserVos yunPictureUserVo = new YunPictureUserVos();
+        YunPicture byId = yunPictureService.getById(picId);
+        ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        //关联用户信息
+        YunUser user = yunUserService.getById(byId.getUserId());
+        YunPictureVo yunPictureVo = new YunPictureVo();
+        BeanUtils.copyProperties(byId, yunPictureVo);
+        YunUserVo yunUserVo = new YunUserVo();
+        BeanUtils.copyProperties(user, yunUserVo);
+        yunPictureUserVo.setYunPicture(yunPictureVo);
+        yunPictureUserVo.setYunUser(yunUserVo);
+        return new ResultTUtil<YunPictureUserVos>().success("查询成功", yunPictureUserVo);
+    }
+
+    @ApiOperation("修改图片")
+    @PutMapping("/update/vo")
+    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil updateVo(@Validated UpdatePictrueParam updatePictrueParam) {
+        ThrowUtils.throwIf(updatePictrueParam.getPicId() == null, ErrorCode.NOT_FOUND_ERROR);
+        YunPicture yunPicture = new YunPicture();
+        BeanUtils.copyProperties(updatePictrueParam, yunPicture);
+        String jsonStr = JSONUtil.toJsonStr(updatePictrueParam.getTags());
+        yunPicture.setTags(jsonStr);
+        boolean b = yunPictureService.updateById(yunPicture);
+        ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
+        return new ResultTUtil<>().success("修改成功");
+    }
+
+    @ApiOperation("查询所有标签和类别")
+    @GetMapping("/tags/all")
+    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil<YunCategoryTagVo> allTags() {
+        YunCategoryTagVo yunCategoryTagVo = new YunCategoryTagVo();
+        List<String> tags = Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意");
+        List<String> cor = Arrays.asList("模板", "电商", "表情包", "素材", "海报");
+        yunCategoryTagVo.setTags(tags);
+        yunCategoryTagVo.setCategory(cor);
+        return new ResultTUtil<YunCategoryTagVo>().success("查询成功", yunCategoryTagVo);
+    }
+
 }
 

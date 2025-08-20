@@ -1,6 +1,5 @@
-package com.mashang.yunbac.web.entity.params;
+package com.mashang.yunbac.web.entity.params.common;
 
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;

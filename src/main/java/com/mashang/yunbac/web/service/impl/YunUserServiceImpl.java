@@ -1,13 +1,12 @@
 package com.mashang.yunbac.web.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.UserRoleEnum;
-import com.mashang.yunbac.web.entity.params.LoginParam;
-import com.mashang.yunbac.web.entity.params.RegisterParam;
+import com.mashang.yunbac.web.entity.params.user.LoginParam;
+import com.mashang.yunbac.web.entity.params.user.RegisterParam;
 import com.mashang.yunbac.web.exception.BusinessException;
 import com.mashang.yunbac.web.mapper.YunUserMapper;
 import com.mashang.yunbac.web.service.YunUserService;

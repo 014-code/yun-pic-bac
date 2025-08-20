@@ -1,9 +1,5 @@
-package com.mashang.yunbac.web.entity.vo;
+package com.mashang.yunbac.web.entity.vo.picture;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -22,7 +18,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("yun_picture")
 public class YunPictureVo {
     /**
      * 图片id

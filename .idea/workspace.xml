@@ -4,22 +4,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="用户模块完成">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/56f12691-fd9e-43c3-9942-51623b575c08.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/56f12691-fd9e-43c3-9942-51623b575c08.xml" afterDir="false" />
+    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="腾讯云cos存储初始化功能完成">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/YunBacApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/YunBacApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/annotation/RequireAuth.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/authlnterceptor/AuthInterceptor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/authlnterceptor/AuthInterceptor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/config/LAuthInterceptorConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/config/LAuthInterceptorConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunUserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunUserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PageInfoParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PageInfoParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/AddYunUserParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/AddYunUserParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/GetUserListParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/GetUserListParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/LoginParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/LoginParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PageInfoParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/common/PageInfoParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PictrueParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/PictrueParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PictureUploadParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/PictureUploadParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/RegisterParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/RegisterParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/UpdateYunUserParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/UpdateYunUserParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/YunPictureVo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/YunPictureVo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/CosManger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/CosManger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/file/FileManger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/FileManger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunUserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunUserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunUserServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/mapper/YunUserMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mapper/YunPictureMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/mashang/yunbac/YunBacApplication.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/mashang/yunbac/YunBacApplication.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,39 +73,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "JUnit.YunBacApplicationTests.executor": "Run",
-    "Maven.yun-bac [clean].executor": "Run",
-    "Maven.yun-bac [install].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Spring Boot.YunBacApplication.executor": "Run",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/wenjian/personal-pro/yun-pic-bac/yun-bac/src/main/resources",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "项目",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;JUnit.YunBacApplicationTests.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.yun-bac [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.yun-bac [install].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Spring Boot.YunBacApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/wenjian/personal-pro/yun-pic-bac/yun-bac/src/main/resources&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;项目&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\wenjian\personal-pro\yun-pic-bac\yun-bac\src\main\resources" />
@@ -110,11 +115,11 @@
       <recent name="D:\wenjian\personal-pro\yun-pic\yun-bac\src\main\java\com\mashang\yunbac\web\utils" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
-      <recent name="com.mashang.yunbac.web.entity.params" />
       <recent name="com.mashang.yunbac.web.entity.vo" />
+      <recent name="com.mashang.yunbac.web.entity.params.picture" />
+      <recent name="com.mashang.yunbac.web.entity.params" />
       <recent name="com.mashang.yunbac.web.aop" />
       <recent name="com.mashang.yunbac.web.config" />
-      <recent name="com.mashang.yunbac.web.utils" />
     </key>
   </component>
   <component name="RunManager" selected="Spring Boot.YunBacApplication">
@@ -184,7 +189,9 @@
       <workItem from="1755495588763" duration="128000" />
       <workItem from="1755516514455" duration="4057000" />
       <workItem from="1755564814790" duration="12590000" />
-      <workItem from="1755607373554" duration="4935000" />
+      <workItem from="1755607373554" duration="4988000" />
+      <workItem from="1755677144990" duration="3900000" />
+      <workItem from="1755689965949" duration="4169000" />
     </task>
     <task id="LOCAL-00001" summary="后端项目初始化">
       <option name="closed" value="true" />
@@ -210,7 +217,15 @@
       <option name="project" value="LOCAL" />
       <updated>1755495619344</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="腾讯云cos存储初始化功能完成">
+      <option name="closed" value="true" />
+      <created>1755613161767</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1755613161767</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -230,6 +245,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="后端项目初始化" />
     <MESSAGE value="用户模块完成" />
-    <option name="LAST_COMMIT_MESSAGE" value="用户模块完成" />
+    <MESSAGE value="腾讯云cos存储初始化功能完成" />
+    <option name="LAST_COMMIT_MESSAGE" value="腾讯云cos存储初始化功能完成" />
   </component>
 </project>

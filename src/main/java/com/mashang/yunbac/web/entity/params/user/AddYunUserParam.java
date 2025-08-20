@@ -1,13 +1,9 @@
-package com.mashang.yunbac.web.entity.params;
+package com.mashang.yunbac.web.entity.params.user;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * (YunUser)实体类
@@ -18,13 +14,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateYunUserParam {
-
-    /**
-     * 用户id
-     */
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long userId;
+public class AddYunUserParam {
     /**
      * 用户名称
      */
@@ -32,10 +22,12 @@ public class UpdateYunUserParam {
     /**
      * 账号
      */
+    @NotNull("账号不能为空")
     private String account;
     /**
      * 密码
      */
+    @NotNull("密码不能为空")
     private String password;
     /**
      * 头像
