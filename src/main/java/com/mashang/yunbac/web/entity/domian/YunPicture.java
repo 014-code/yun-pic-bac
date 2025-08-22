@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * (YunPicture)实体类
@@ -24,7 +25,7 @@ public class YunPicture {
     /**
      * 图片id
      */
-    @TableId(type = IdType.ASSIGN_UUID)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long picId;
     /**
      * 图片地址
@@ -67,9 +68,21 @@ public class YunPicture {
      */
     private String picFormat;
     /**
+     * 图片状态
+     */
+    private String status;
+    /**
+     * 原因
+     */
+    private String reason;
+    /**
      * 创建用户
      */
     private Long userId;
+    /**
+     * 审核人id
+     */
+    private Long reviewId;
     /**
      * 创建时间
      */

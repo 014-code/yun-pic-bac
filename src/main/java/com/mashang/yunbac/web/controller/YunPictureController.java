@@ -11,8 +11,10 @@ import com.mashang.yunbac.web.constant.UserConstant;
 import com.mashang.yunbac.web.entity.domian.YunPicture;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
+import com.mashang.yunbac.web.entity.enums.PicStatusEnum;
 import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
 import com.mashang.yunbac.web.entity.params.picture.GetPictrueListParam;
+import com.mashang.yunbac.web.entity.params.picture.ReviewPicParam;
 import com.mashang.yunbac.web.entity.params.picture.UpdatePictrueParam;
 import com.mashang.yunbac.web.entity.vo.common.YunCategoryTagVo;
 import com.mashang.yunbac.web.entity.vo.picture.YunPictureUserVo;
@@ -21,6 +23,7 @@ import com.mashang.yunbac.web.entity.vo.picture.YunPictureVo;
 import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
 import com.mashang.yunbac.web.exception.ThrowUtils;
 import com.mashang.yunbac.web.service.impl.YunUserServiceImpl;
+import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
 import io.swagger.annotations.Api;
@@ -34,6 +37,7 @@ import com.mashang.yunbac.web.service.YunPictureService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,9 +61,9 @@ public class YunPictureController {
     @Autowired
     private YunUserServiceImpl yunUserService;
 
-    @ApiOperation("上传图片(并返回图片信息)-管理员")
+    @ApiOperation("上传图片(并返回图片信息)")
     @PostMapping("/uploadPic")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, YunUser yunUser) {
         return yunPictureService.uploadPic(file, picId, yunUser);
     }
@@ -87,6 +91,10 @@ public class YunPictureController {
             }
         }
         List<YunPicture> list = yunPictureService.list(yunUserVoQueryWrapper);
+        //状态转化
+        list.stream().forEach(yunPicture -> {
+            yunPicture.setStatus(PicStatusEnum.getEnumByValue(yunPicture.getStatus()).getValue());
+        });
         // 获取分页信息
         PageInfo<YunPicture> pageList = new PageInfo<>(list);
         return new RowsTUtil<YunPicture>().success("查询成功", pageList.getTotal(), pageList.getList());
@@ -109,7 +117,7 @@ public class YunPictureController {
     @ApiOperation("更新图片信息-管理员")
     @PutMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public ResultTUtil update(@Validated UpdatePictrueParam updatePictrueParam) {
+    public ResultTUtil update(@RequestBody @Validated UpdatePictrueParam updatePictrueParam) {
         ThrowUtils.throwIf(updatePictrueParam.getPicId() == null, ErrorCode.NOT_FOUND_ERROR);
         YunPicture yunPicture = new YunPicture();
         BeanUtils.copyProperties(updatePictrueParam, yunPicture);
@@ -144,6 +152,7 @@ public class YunPictureController {
         yunUserVoQueryWrapper.like(getPictrueListParam.getTags() != null, "tags", getPictrueListParam.getTags());
         yunUserVoQueryWrapper.like(getPictrueListParam.getIntroduction() != null, "introduction", getPictrueListParam.getIntroduction());
         yunUserVoQueryWrapper.like(getPictrueListParam.getPicFormat() != null, "pic_format", getPictrueListParam.getPicFormat());
+        yunUserVoQueryWrapper.eq("status", "1");
         List<YunPicture> list = yunPictureService.list(yunUserVoQueryWrapper);
         // 获取分页信息
         PageInfo<YunPicture> pageList = new PageInfo<>(list);
@@ -170,7 +179,9 @@ public class YunPictureController {
         YunPictureVo yunPictureVo = new YunPictureVo();
         BeanUtils.copyProperties(byId, yunPictureVo);
         YunUserVo yunUserVo = new YunUserVo();
-        BeanUtils.copyProperties(user, yunUserVo);
+        if (user != null) {
+            BeanUtils.copyProperties(user, yunUserVo);
+        }
         yunPictureUserVo.setYunPicture(yunPictureVo);
         yunPictureUserVo.setYunUser(yunUserVo);
         return new ResultTUtil<YunPictureUserVos>().success("查询成功", yunPictureUserVo);
@@ -179,12 +190,14 @@ public class YunPictureController {
     @ApiOperation("修改图片")
     @PutMapping("/update/vo")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
-    public ResultTUtil updateVo(@Validated UpdatePictrueParam updatePictrueParam) {
+    public ResultTUtil updateVo(@RequestBody @Validated UpdatePictrueParam updatePictrueParam) {
         ThrowUtils.throwIf(updatePictrueParam.getPicId() == null, ErrorCode.NOT_FOUND_ERROR);
         YunPicture yunPicture = new YunPicture();
         BeanUtils.copyProperties(updatePictrueParam, yunPicture);
         String jsonStr = JSONUtil.toJsonStr(updatePictrueParam.getTags());
         yunPicture.setTags(jsonStr);
+        //重置为待审核
+        yunPicture.setStatus("0");
         boolean b = yunPictureService.updateById(yunPicture);
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
         return new ResultTUtil<>().success("修改成功");
@@ -200,6 +213,26 @@ public class YunPictureController {
         yunCategoryTagVo.setTags(tags);
         yunCategoryTagVo.setCategory(cor);
         return new ResultTUtil<YunCategoryTagVo>().success("查询成功", yunCategoryTagVo);
+    }
+
+    @ApiOperation("审核图片")
+    @PutMapping("/review")
+    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil review(@RequestBody @Validated ReviewPicParam reviewPicParam, HttpServletRequest request) {
+        // 从头部获取我们的token
+        String token = request.getHeader("Authorization");
+        //校验
+        ThrowUtils.throwIf(reviewPicParam.getPicId() == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(reviewPicParam.getStatus() == null, ErrorCode.NOT_FOUND_ERROR);
+        //更新状态
+        YunPicture yunPicture = new YunPicture();
+        yunPicture.setPicId(reviewPicParam.getPicId());
+        yunPicture.setStatus(reviewPicParam.getStatus());
+        yunPicture.setReason(reviewPicParam.getReason());
+        yunPicture.setReviewId(JWTUtil.getUserId(token));
+        boolean b = yunPictureService.updateById(yunPicture);
+        ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
+        return new ResultTUtil().success("审核成功");
     }
 
 }

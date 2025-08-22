@@ -16,32 +16,22 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdatePictrueParam {
+public class ReviewPicParam {
     /**
      * 图片名称
      */
-    @ApiModelProperty("图片id")
+    @ApiModelProperty(value = "图片id", required = true)
     private Long picId;
     /**
-     * 图片名称
+     * 状态
      */
-    @ApiModelProperty("图片名称")
-    private String name;
+    @ApiModelProperty(value = "状态", required = true)
+    private String status;
     /**
-     * 简介
+     * 状态
      */
-    @ApiModelProperty("简介")
-    private String introduction;
-    /**
-     * 分类
-     */
-    @ApiModelProperty("分类")
-    private String category;
-    /**
-     * 标签-json
-     */
-    @ApiModelProperty("标签-json")
-    private List<String> tags;
+    @ApiModelProperty(value = "原因", required = false)
+    private String reason;
 
 }
 

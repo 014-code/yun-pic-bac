@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
+import com.mashang.yunbac.web.entity.enums.UserRoleEnum;
 import com.mashang.yunbac.web.entity.vo.picture.UploadPictureResult;
 import com.mashang.yunbac.web.entity.vo.picture.YunPictureVo;
 import com.mashang.yunbac.web.exception.BusinessException;
@@ -62,16 +63,22 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setPicFormat(uploadPictureResult.getPicFormat());
         yunPicture.setCreateTime(new Date());
         yunPicture.setUpdateTime(new Date());
+        yunPicture.setUrl(uploadPictureResult.getUrl());
+        //为管理员则直接通过
+        if (yunUser.getRole().equals(UserRoleEnum.ADMIN.getValue())) {
+            yunPicture.setStatus("1");
+        }
         //是否为更新
         if (picId != null) {
             yunPicture.setPicId(picId);
-        }
-        boolean b = yunPictureMapper.insertOrUpdate(yunPicture);
-        if (!b) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+            yunPictureMapper.updateById(yunPicture);
+        } else {
+            yunPictureMapper.insert(yunPicture);
+            yunPicture.setPicId(yunPictureMapper.selectById(yunPicture.getPicId()).getPicId());
         }
         YunPictureVo yunPictureVo = new YunPictureVo();
         BeanUtils.copyProperties(yunPicture, yunPictureVo);
+        yunPictureVo.setPicId(yunPicture.getPicId());
         return new ResultTUtil<YunPictureVo>().success("查询成功", yunPictureVo);
     }
 }

@@ -4,27 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="腾讯云cos存储初始化功能完成">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="图片上传下载、管理接口完成">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunUserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunUserController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/AddYunUserParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/AddYunUserParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/GetUserListParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/GetUserListParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/LoginParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/LoginParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PageInfoParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/common/PageInfoParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PictrueParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/PictrueParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/PictureUploadParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/PictureUploadParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/RegisterParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/RegisterParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/UpdateYunUserParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/user/UpdateYunUserParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/YunPictureVo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/YunPictureVo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/CosManger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/CosManger.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/file/FileManger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/FileManger.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunUserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/UpdatePictrueParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/UpdatePictrueParam.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunUserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunUserServiceImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,11 +101,11 @@
       <recent name="D:\wenjian\personal-pro\yun-pic\yun-bac\src\main\java\com\mashang\yunbac\web\utils" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
-      <recent name="com.mashang.yunbac.web.entity.vo" />
       <recent name="com.mashang.yunbac.web.entity.params.picture" />
+      <recent name="com.mashang.yunbac.web.entity.enums" />
+      <recent name="com.mashang.yunbac.web.entity.vo" />
       <recent name="com.mashang.yunbac.web.entity.params" />
       <recent name="com.mashang.yunbac.web.aop" />
-      <recent name="com.mashang.yunbac.web.config" />
     </key>
   </component>
   <component name="RunManager" selected="Spring Boot.YunBacApplication">
@@ -192,6 +178,10 @@
       <workItem from="1755607373554" duration="4988000" />
       <workItem from="1755677144990" duration="3900000" />
       <workItem from="1755689965949" duration="4169000" />
+      <workItem from="1755694184798" duration="100000" />
+      <workItem from="1755743621030" duration="13779000" />
+      <workItem from="1755777247468" duration="1720000" />
+      <workItem from="1755863048766" duration="3841000" />
     </task>
     <task id="LOCAL-00001" summary="后端项目初始化">
       <option name="closed" value="true" />
@@ -225,7 +215,23 @@
       <option name="project" value="LOCAL" />
       <updated>1755613161767</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="图片上传下载、管理接口完成">
+      <option name="closed" value="true" />
+      <created>1755694252521</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1755694252521</updated>
+    </task>
+    <task id="LOCAL-00006" summary="图片上传下载、管理接口完成">
+      <option name="closed" value="true" />
+      <created>1755694274688</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1755694274688</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -246,6 +252,7 @@
     <MESSAGE value="后端项目初始化" />
     <MESSAGE value="用户模块完成" />
     <MESSAGE value="腾讯云cos存储初始化功能完成" />
-    <option name="LAST_COMMIT_MESSAGE" value="腾讯云cos存储初始化功能完成" />
+    <MESSAGE value="图片上传下载、管理接口完成" />
+    <option name="LAST_COMMIT_MESSAGE" value="图片上传下载、管理接口完成" />
   </component>
 </project>
