@@ -26,6 +26,7 @@ import com.mashang.yunbac.web.service.impl.YunUserServiceImpl;
 import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
+import com.mashang.yunbac.web.exception.BusinessException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +65,59 @@ public class YunPictureController {
     @ApiOperation("上传图片(并返回图片信息)")
     @PostMapping("/uploadPic")
 //    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, YunUser yunUser) {
+    public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, HttpServletRequest request) {
+        // 从请求头获取token
+        String token = request.getHeader("Authorization");
+        if (token == null || token.trim().isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录或缺少token");
+        }
+        
+        // 验证token并获取用户ID
+        boolean valid = JWTUtil.verifyToken(token);
+        if (!valid) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户认证失败");
+        }
+        
+        Long userId = JWTUtil.getUserId(token);
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在或token过期");
+        }
+        
+        // 从数据库获取完整的用户信息
+        YunUser yunUser = yunUserService.getById(userId);
+        if (yunUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
+        }
+        return yunPictureService.uploadPic(file, picId, yunUser);
+    }
+
+    @ApiOperation("url上传图片(并返回图片信息)")
+    @PostMapping("/uploadPic/url")
+//    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil<YunPictureVo> uploadPicUrl(String file, Long picId, HttpServletRequest request) {
+        // 从请求头获取token
+        String token = request.getHeader("Authorization");
+        if (token == null || token.trim().isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录或缺少token");
+        }
+        
+        // 验证token并获取用户ID
+        boolean valid = JWTUtil.verifyToken(token);
+        if (!valid) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户认证失败");
+        }
+        
+        Long userId = JWTUtil.getUserId(token);
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在或token过期");
+        }
+        
+        // 从数据库获取完整的用户信息
+        YunUser yunUser = yunUserService.getById(userId);
+        if (yunUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
+        }
+        
         return yunPictureService.uploadPic(file, picId, yunUser);
     }
 
@@ -177,7 +230,9 @@ public class YunPictureController {
         //关联用户信息
         YunUser user = yunUserService.getById(byId.getUserId());
         YunPictureVo yunPictureVo = new YunPictureVo();
+        List<String> list = JSONUtil.parseArray(byId.getTags()).toList(String.class);
         BeanUtils.copyProperties(byId, yunPictureVo);
+        yunPictureVo.setTags(list);
         YunUserVo yunUserVo = new YunUserVo();
         if (user != null) {
             BeanUtils.copyProperties(user, yunUserVo);

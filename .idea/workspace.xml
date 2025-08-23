@@ -4,12 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="图片上传下载、管理接口完成">
+    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="图片审核模块完成">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/UpdatePictrueParam.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/params/picture/UpdatePictrueParam.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/FileManger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/FileManger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -59,39 +58,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;JUnit.YunBacApplicationTests.executor&quot;: &quot;Run&quot;,
-    &quot;Maven.yun-bac [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.yun-bac [install].executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Spring Boot.YunBacApplication.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/wenjian/personal-pro/yun-pic-bac/yun-bac/src/main/resources&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;项目&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JUnit.YunBacApplicationTests.executor": "Run",
+    "Maven.yun-bac [clean].executor": "Run",
+    "Maven.yun-bac [install].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Spring Boot.YunBacApplication.executor": "Run",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/wenjian/personal-pro/yun-pic-bac/yun-bac/src/main/resources",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "项目",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\wenjian\personal-pro\yun-pic-bac\yun-bac\src\main\resources" />
@@ -181,7 +180,9 @@
       <workItem from="1755694184798" duration="100000" />
       <workItem from="1755743621030" duration="13779000" />
       <workItem from="1755777247468" duration="1720000" />
-      <workItem from="1755863048766" duration="3841000" />
+      <workItem from="1755863048766" duration="3895000" />
+      <workItem from="1755912753202" duration="2850000" />
+      <workItem from="1755927984084" duration="4267000" />
     </task>
     <task id="LOCAL-00001" summary="后端项目初始化">
       <option name="closed" value="true" />
@@ -231,7 +232,15 @@
       <option name="project" value="LOCAL" />
       <updated>1755694274688</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="图片审核模块完成">
+      <option name="closed" value="true" />
+      <created>1755867203586</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1755867203586</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -253,6 +262,7 @@
     <MESSAGE value="用户模块完成" />
     <MESSAGE value="腾讯云cos存储初始化功能完成" />
     <MESSAGE value="图片上传下载、管理接口完成" />
-    <option name="LAST_COMMIT_MESSAGE" value="图片上传下载、管理接口完成" />
+    <MESSAGE value="图片审核模块完成" />
+    <option name="LAST_COMMIT_MESSAGE" value="图片审核模块完成" />
   </component>
 </project>

@@ -37,7 +37,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
     private FileManger fileManger;
 
     @Override
-    public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, YunUser yunUser) {
+    public ResultTUtil<YunPictureVo> uploadPic(Object file, Long picId, YunUser yunUser) {
         //判断传入的用户信息是否有登录，没则直接抛异常
         ThrowUtils.throwIf(yunUser == null, ErrorCode.NOT_LOGIN_ERROR);
         //判断是新增图片还是更新图片-有id就是更新,如果是更新则需要校验图片是否存在，不存在也要抛异常
@@ -50,8 +50,16 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         }
         //使用filemanger得上传图片，还得划分目录，这里划分至public目录即可 + 用户id
         String format = "public/" + yunUser.getUserId();
-        //把从filemanger得到的图片信息入库-更新或者新增
-        UploadPictureResult uploadPictureResult = fileManger.uploadPicture(file, format);
+        UploadPictureResult uploadPictureResult = new UploadPictureResult();
+        //区分上传的是文件类型还是url
+        if (file instanceof MultipartFile) {
+            //把从filemanger得到的图片信息入库-更新或者新增
+            uploadPictureResult = fileManger.uploadPicture((MultipartFile) file, format);
+        } else if (file instanceof String) {
+            //把从filemanger得到的图片信息入库-更新或者新增
+            uploadPictureResult = fileManger.uploadPicture((String) file, format);
+        }
+
         YunPicture yunPicture = new YunPicture();
         yunPicture.setUserId(yunUser.getUserId());
         yunPicture.setName(uploadPictureResult.getPicName());
@@ -65,7 +73,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setUpdateTime(new Date());
         yunPicture.setUrl(uploadPictureResult.getUrl());
         //为管理员则直接通过
-        if (yunUser.getRole().equals(UserRoleEnum.ADMIN.getValue())) {
+        if (yunUser.getRole() != null && yunUser.getRole().equals(UserRoleEnum.ADMIN.getValue())) {
             yunPicture.setStatus("1");
         }
         //是否为更新
