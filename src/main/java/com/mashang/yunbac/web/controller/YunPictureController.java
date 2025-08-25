@@ -13,6 +13,7 @@ import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.PicStatusEnum;
 import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
+import com.mashang.yunbac.web.entity.params.picture.CaptureParam;
 import com.mashang.yunbac.web.entity.params.picture.GetPictrueListParam;
 import com.mashang.yunbac.web.entity.params.picture.ReviewPicParam;
 import com.mashang.yunbac.web.entity.params.picture.UpdatePictrueParam;
@@ -71,24 +72,24 @@ public class YunPictureController {
         if (token == null || token.trim().isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录或缺少token");
         }
-        
+
         // 验证token并获取用户ID
         boolean valid = JWTUtil.verifyToken(token);
         if (!valid) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户认证失败");
         }
-        
+
         Long userId = JWTUtil.getUserId(token);
         if (userId == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在或token过期");
         }
-        
+
         // 从数据库获取完整的用户信息
         YunUser yunUser = yunUserService.getById(userId);
         if (yunUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
         }
-        return yunPictureService.uploadPic(file, picId, yunUser);
+        return yunPictureService.uploadPic(file, picId, yunUser, null);
     }
 
     @ApiOperation("url上传图片(并返回图片信息)")
@@ -100,25 +101,25 @@ public class YunPictureController {
         if (token == null || token.trim().isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录或缺少token");
         }
-        
+
         // 验证token并获取用户ID
         boolean valid = JWTUtil.verifyToken(token);
         if (!valid) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户认证失败");
         }
-        
+
         Long userId = JWTUtil.getUserId(token);
         if (userId == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在或token过期");
         }
-        
+
         // 从数据库获取完整的用户信息
         YunUser yunUser = yunUserService.getById(userId);
         if (yunUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
         }
-        
-        return yunPictureService.uploadPic(file, picId, yunUser);
+
+        return yunPictureService.uploadPic(file, picId, yunUser, null);
     }
 
     @ApiOperation("分页查询图片列表-管理员")
@@ -288,6 +289,20 @@ public class YunPictureController {
         boolean b = yunPictureService.updateById(yunPicture);
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
         return new ResultTUtil().success("审核成功");
+    }
+
+    @ApiOperation("批量抓取图片")
+    @PostMapping("/capture")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public ResultTUtil capture(@RequestBody @Validated CaptureParam captureParam) {
+        //校验参数
+        ThrowUtils.throwIf(captureParam == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(captureParam.getNum() == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(captureParam.getText() == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(captureParam.getYunUser() == null, ErrorCode.NOT_FOUND_ERROR);
+        //防爬虫-最多50条
+        ThrowUtils.throwIf(captureParam.getNum() > 50, ErrorCode.NOT_FOUND_ERROR, "最大数量不能超过50条");
+        return yunPictureService.capture(captureParam, captureParam.getYunUser());
     }
 
 }

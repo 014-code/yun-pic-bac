@@ -111,8 +111,20 @@ public class FileManger {
      * @return 上传结果封装
      */
     public UploadPictureResult uploadPicture(String multipartFile, String uploadPathPrefix) {
+        return uploadPicture(multipartFile, uploadPathPrefix, false);
+    }
+
+    /**
+     * url上传图片主方法（支持跳过验证）
+     *
+     * @param multipartFile    上传的文件路径
+     * @param uploadPathPrefix 云存储路径前缀
+     * @param skipValidation   是否跳过URL验证
+     * @return 上传结果封装
+     */
+    public UploadPictureResult uploadPicture(String multipartFile, String uploadPathPrefix, boolean skipValidation) {
         // 1. 参数校验
-        validPicture(multipartFile);
+        validPicture(multipartFile, skipValidation);
 
         // 2. 生成唯一文件名
         String uuid = UUID.randomUUID().toString().substring(0, 16);
@@ -179,6 +191,19 @@ public class FileManger {
      * 校验文件
      */
     public void validPicture(String multipartFile) {
+        validPicture(multipartFile, false);
+    }
+
+    /**
+     * 校验文件
+     * @param multipartFile 文件URL
+     * @param skipValidation 是否跳过验证（用于批量操作）
+     */
+    public void validPicture(String multipartFile, boolean skipValidation) {
+        if (skipValidation) {
+            log.info("跳过URL验证: {}", multipartFile);
+            return;
+        }
         ThrowUtils.throwIf(multipartFile == null, ErrorCode.PARAMS_ERROR, "文件地址不能为空");
 
         //校验url是否合法
@@ -192,28 +217,33 @@ public class FileManger {
         ThrowUtils.throwIf(!(multipartFile.startsWith("http://") || multipartFile.startsWith("https://")), ErrorCode.PARAMS_ERROR, "仅支持http和https的地址");
 
         //创建请求
-        HttpResponse execute = HttpUtil.createRequest(Method.HEAD, multipartFile).execute();
-        //请求地址不存在则直接返回
-        if (execute.getStatus() != HttpStatus.SC_OK) {
-            return;
-        }
-        //校验文件类型
-        String header = execute.header("Content-Type");
-        if (StrUtil.isNotBlank(header)) {
-            ThrowUtils.throwIf(!(ALLOWED.contains(header.toLowerCase())), ErrorCode.PARAMS_ERROR, "不支持该文件类型");
-        }
-        //校验文件大小
-        String length = execute.header("Content-Length");
-        if (StrUtil.isNotBlank(length)) {
-            try {
-                long l = Long.parseLong(length);
-                ThrowUtils.throwIf(l > MAX_FILE_SIZE, ErrorCode.PARAMS_ERROR, "文件大小不能超过2MB");
-            } catch (NumberFormatException e) {
-                log.warn("无法获取文件大小，跳过大小校验: {}", length);
+        try {
+            HttpResponse execute = HttpUtil.createRequest(Method.HEAD, multipartFile).execute();
+            //请求地址不存在则直接返回
+            if (execute.getStatus() != HttpStatus.SC_OK) {
+                return;
             }
+            //校验文件类型
+            String header = execute.header("Content-Type");
+            if (StrUtil.isNotBlank(header)) {
+                ThrowUtils.throwIf(!(ALLOWED.contains(header.toLowerCase())), ErrorCode.PARAMS_ERROR, "不支持该文件类型");
+            }
+            //校验文件大小
+            String length = execute.header("Content-Length");
+            if (StrUtil.isNotBlank(length)) {
+                try {
+                    long l = Long.parseLong(length);
+                    ThrowUtils.throwIf(l > MAX_FILE_SIZE, ErrorCode.PARAMS_ERROR, "文件大小不能超过2MB");
+                } catch (NumberFormatException e) {
+                    log.warn("无法获取文件大小，跳过大小校验: {}", length);
+                }
+            }
+            //关闭
+            execute.close();
+        } catch (Exception e) {
+            // 网络验证失败时，记录日志但跳过验证，继续处理
+            log.warn("验证图片URL失败，跳过验证继续处理: {}, 错误: {}", multipartFile, e.getMessage());
         }
-        //关闭
-        execute.close();
     }
 
     /**
