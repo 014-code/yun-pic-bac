@@ -197,28 +197,7 @@ public class YunPictureController {
     @PostMapping("/list/vo")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public RowsTUtil<YunPictureVo> listVo(@Validated PageInfoParam pageInfoParam, @Validated GetPictrueListParam getPictrueListParam) {
-        // 开启分页
-        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
-        //后台列表根据多个条件查询
-        QueryWrapper<YunPicture> yunUserVoQueryWrapper = new QueryWrapper<>();
-        yunUserVoQueryWrapper.like(getPictrueListParam.getCategory() != null, "category", getPictrueListParam.getCategory());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getName() != null, "name", getPictrueListParam.getName());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getTags() != null, "tags", getPictrueListParam.getTags());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getIntroduction() != null, "introduction", getPictrueListParam.getIntroduction());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getPicFormat() != null, "pic_format", getPictrueListParam.getPicFormat());
-        yunUserVoQueryWrapper.eq("status", "1");
-        List<YunPicture> list = yunPictureService.list(yunUserVoQueryWrapper);
-        // 获取分页信息
-        PageInfo<YunPicture> pageList = new PageInfo<>(list);
-        //转化脱敏
-        // 转换为VO列表
-        List<YunPictureVo> yunPictureVos = new ArrayList<>();
-        for (YunPicture yunUser : list) {
-            YunPictureVo vo = new YunPictureVo();
-            BeanUtil.copyProperties(yunUser, vo);
-            yunPictureVos.add(vo);
-        }
-        return new RowsTUtil<YunPictureVo>().success("查询成功", pageList.getTotal(), yunPictureVos);
+        return yunPictureService.listVo(pageInfoParam, getPictrueListParam);
     }
 
     @ApiOperation("查询图片详情")

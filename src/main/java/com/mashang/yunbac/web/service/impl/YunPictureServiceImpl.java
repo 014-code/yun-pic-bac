@@ -1,11 +1,21 @@
 package com.mashang.yunbac.web.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.UserRoleEnum;
+import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
 import com.mashang.yunbac.web.entity.params.picture.CaptureParam;
+import com.mashang.yunbac.web.entity.params.picture.GetPictrueListParam;
 import com.mashang.yunbac.web.entity.vo.picture.UploadPictureResult;
 import com.mashang.yunbac.web.entity.vo.picture.YunPictureVo;
 import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
@@ -16,18 +26,25 @@ import com.mashang.yunbac.web.mapper.YunPictureMapper;
 import com.mashang.yunbac.web.service.YunPictureService;
 import com.mashang.yunbac.web.entity.domian.YunPicture;
 import com.mashang.yunbac.web.utils.ResultTUtil;
+import com.mashang.yunbac.web.utils.RowsTUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +61,12 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
     private YunPictureMapper yunPictureMapper;
     @Autowired
     private FileManger fileManger;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    //本地缓存构造(五分钟过期时间 + 最大存储10000条数据)
+    private final Cache<String, String> LOCAL_CACHE = Caffeine.newBuilder().initialCapacity(1024)
+            .maximumSize(10000L).expireAfterWrite(5L, TimeUnit.MINUTES).build();
 
     /**
      * 上传图片
@@ -143,7 +166,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         Long uploadCount = 1L;
         Long successCount = 0L;
         Long failCount = 0L;
-        
+
         for (Element element : select) {
             try {
                 String src = element.select(".iusc").get(0).attr("m");
@@ -183,8 +206,63 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
                 continue; // 继续处理下一个
             }
         }
-        
+
         String resultMsg = String.format("操作完成，成功: %d, 失败: %d", successCount, failCount);
         return new ResultTUtil().success(resultMsg);
+    }
+
+    @Override
+    public RowsTUtil<YunPictureVo> listVo(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam) {
+        //构造redis的key
+        String queryCondition = JSONUtil.toJsonStr(getPictrueListParam);
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String redisKey = "yunpic:listVo:" + hashKey;
+        //1.先查询本地缓存
+        String ifPresent = LOCAL_CACHE.getIfPresent(redisKey);
+        if (ifPresent != null) {
+            List<YunPictureVo> bean = JSONUtil.toBean(ifPresent, List.class);
+            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
+        }
+        //2.查询redis中的
+        //拿到redis的string操作对象，并指定map类型
+        ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
+        String cached = stringStringValueOperations.get(redisKey);
+        //如果有则将其解析化为对象
+        if (cached != null) {
+            List<YunPictureVo> bean = JSONUtil.toBean(stringStringValueOperations.get(cached), List.class);
+            //存入本地缓存
+            LOCAL_CACHE.put(redisKey, cached);
+            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
+        }
+        // 开启分页
+        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        //后台列表根据多个条件查询
+        QueryWrapper<YunPicture> yunUserVoQueryWrapper = new QueryWrapper<>();
+        yunUserVoQueryWrapper.like(getPictrueListParam.getCategory() != null, "category", getPictrueListParam.getCategory());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getName() != null, "name", getPictrueListParam.getName());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getTags() != null, "tags", getPictrueListParam.getTags());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getIntroduction() != null, "introduction", getPictrueListParam.getIntroduction());
+        yunUserVoQueryWrapper.like(getPictrueListParam.getPicFormat() != null, "pic_format", getPictrueListParam.getPicFormat());
+        yunUserVoQueryWrapper.eq("status", "1");
+        List<YunPicture> list = yunPictureMapper.selectList(yunUserVoQueryWrapper);
+        // 获取分页信息
+        PageInfo<YunPicture> pageList = new PageInfo<>(list);
+        //转化脱敏
+        // 转换为VO列表
+        List<YunPictureVo> yunPictureVos = new ArrayList<>();
+        for (YunPicture yunUser : list) {
+            YunPictureVo vo = new YunPictureVo();
+            BeanUtil.copyProperties(yunUser, vo);
+            yunPictureVos.add(vo);
+        }
+        //变成json字符串
+        String jsonStr = JSONUtil.toJsonStr(yunPictureVos);
+        //设置过期时间
+        int cacheTime = RandomUtil.randomInt(0, 300);
+        //缓存入redis
+        stringStringValueOperations.set(redisKey, jsonStr, cacheTime, TimeUnit.SECONDS);
+        //更新本地缓存
+        LOCAL_CACHE.put(redisKey, jsonStr);
+        return new RowsTUtil<YunPictureVo>().success("查询成功", pageList.getTotal(), yunPictureVos);
     }
 }
