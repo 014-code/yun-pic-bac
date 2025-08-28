@@ -13,11 +13,12 @@ import com.mashang.yunbac.web.entity.params.user.*;
 import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
 import com.mashang.yunbac.web.exception.BusinessException;
 import com.mashang.yunbac.web.service.YunUserService;
+import com.mashang.yunbac.web.manger.RedisManger;
 import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -40,7 +41,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/user")
 @Slf4j
-@Api(tags = "用户模块")
+@Tag(name = "用户模块", description = "用户相关操作接口")
 public class YunUserController {
     // 加密前缀
     private static final String SALT = "user";
@@ -51,8 +52,10 @@ public class YunUserController {
      */
     @Resource
     private YunUserService yunUserService;
+    @Resource
+    private RedisManger redisManger;
 
-    @ApiOperation("用户注册")
+    @Operation(summary = "用户注册")
     @PostMapping("/register")
     public ResultTUtil<String> register(@RequestBody RegisterParam registerParam) {
         if (StringUtils.isAllBlank(registerParam.getAccount(), registerParam.getPassword(), registerParam.getRePassword())) {
@@ -61,7 +64,7 @@ public class YunUserController {
         return yunUserService.register(registerParam);
     }
 
-    @ApiOperation("用户登录")
+    @Operation(summary = "用户登录")
     @PostMapping("/login")
     public ResultTUtil<String> login(@RequestBody LoginParam loginParam) {
         //登录的参数是否有空的
@@ -71,7 +74,7 @@ public class YunUserController {
         return yunUserService.login(loginParam);
     }
 
-    @ApiOperation(value = "获取当前用户信息")
+    @Operation(summary = "获取当前用户信息")
     @GetMapping("/info")
     public ResultTUtil<YunUserVo> info(HttpServletRequest request) {
         YunUserVo yunUserVo = new YunUserVo();
@@ -82,16 +85,19 @@ public class YunUserController {
         return new ResultTUtil<YunUserVo>().success("查询", yunUserVo);
     }
 
-    @ApiOperation("注销用户")
+    @Operation(summary = "注销用户")
     @PostMapping("/cancellation")
     public ResultTUtil cancellation(HttpServletRequest request) {
         String token = (String) request.getAttribute("Authorization");
-        //清空token
-        JWTUtil.invalidateToken(token);
+        Long userId = JWTUtil.getUserId(token);
+        if (userId != null && userId != 0L) {
+            String redisKey = "login:token:" + userId;
+            redisManger.delete(redisKey);
+        }
         return new ResultTUtil().success("注销成功");
     }
 
-    @ApiOperation("获取用户列表")
+    @Operation(summary = "获取用户列表")
     @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public RowsTUtil<YunUserVo> listUser(@Validated GetUserListParam pageInfo, @Validated PageInfoParam param) {
@@ -116,7 +122,7 @@ public class YunUserController {
         return new RowsTUtil<YunUserVo>().success("查询成功", pageList.getTotal(), yunUserVos);
     }
 
-    @ApiOperation("创建用户")
+    @Operation(summary = "创建用户")
     @PostMapping("/add")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil addUser(@Validated AddYunUserParam param) {
@@ -142,7 +148,7 @@ public class YunUserController {
         }
     }
 
-    @ApiOperation("查询用户详情/未脱敏")
+    @Operation(summary = "查询用户详情/未脱敏")
     @GetMapping("/detail")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil<YunUser> detailUser(@RequestParam Long userId) {
@@ -154,7 +160,7 @@ public class YunUserController {
         return new ResultTUtil<YunUser>().success("查询成功", byId);
     }
 
-    @ApiOperation("修改用户")
+    @Operation(summary = "修改用户")
     @PutMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil updateUser(@Validated UpdateYunUserParam param) {
@@ -182,7 +188,7 @@ public class YunUserController {
         }
     }
 
-    @ApiOperation("查询用户详情/脱敏")
+    @Operation(summary = "查询用户详情/脱敏")
     @GetMapping("/detail/vo")
     public ResultTUtil<YunUserVo> detailUserVo(@RequestParam Long userId) {
         YunUserVo yunUserVo = new YunUserVo();
@@ -196,7 +202,7 @@ public class YunUserController {
         return new ResultTUtil<YunUserVo>().success("查询成功", yunUserVo);
     }
 
-    @ApiOperation("删除用户")
+    @Operation(summary = "删除用户")
     @DeleteMapping("/{userId}")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil delUser(@PathVariable Long userId) {

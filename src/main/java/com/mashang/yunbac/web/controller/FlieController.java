@@ -9,8 +9,8 @@ import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.qcloud.cos.model.COSObject;
 import com.qcloud.cos.model.COSObjectInputStream;
 import com.qcloud.cos.utils.IOUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,14 +26,14 @@ import java.io.IOException;
 
 @Slf4j
 @RestController
-@RequestMapping("file")
-@Api(tags = "文件模块")
+@RequestMapping("/file")
+@Tag(name = "文件模块")
 public class FlieController {
 
     @Resource
     private CosManger cosManger;
 
-    @ApiOperation("测试文件上传")
+    @Operation(summary = "测试文件上传")
     @PostMapping("/upload")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil<String> upload(@RequestPart("file") MultipartFile file) {
@@ -65,7 +65,7 @@ public class FlieController {
         }
     }
 
-    @ApiOperation("测试文件下载")
+    @Operation(summary = "测试文件下载")
     @PostMapping("/download")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public void download(String filePath, HttpServletRequest request, HttpServletResponse response) {

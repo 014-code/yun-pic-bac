@@ -26,4 +26,6 @@ public interface YunPictureService extends IService<YunPicture> {
     ResultTUtil capture(CaptureParam captureParam, YunUser yunUserVo);
 
     RowsTUtil<YunPictureVo> listVo(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam);
+
+    void clearPicFile(YunPicture yunPicture);
 }

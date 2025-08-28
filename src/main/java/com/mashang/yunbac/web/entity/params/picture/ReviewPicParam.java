@@ -1,6 +1,6 @@
 package com.mashang.yunbac.web.entity.params.picture;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,17 +20,17 @@ public class ReviewPicParam {
     /**
      * 图片名称
      */
-    @ApiModelProperty(value = "图片id", required = true)
+    @Schema(description = "图片id", required = true)
     private Long picId;
     /**
      * 状态
      */
-    @ApiModelProperty(value = "状态", required = true)
+    @Schema(description = "状态", required = true)
     private String status;
     /**
      * 状态
      */
-    @ApiModelProperty(value = "原因", required = false)
+    @Schema(description = "原因", required = false)
     private String reason;
 
 }

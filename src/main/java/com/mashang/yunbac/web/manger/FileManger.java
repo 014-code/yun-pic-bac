@@ -1,5 +1,6 @@
 package com.mashang.yunbac.web.manger;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -14,7 +15,9 @@ import com.mashang.yunbac.web.exception.BusinessException;
 import com.mashang.yunbac.web.exception.ThrowUtils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
+import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +82,7 @@ public class FileManger {
             PutObjectResult putObjectResult = cosManger.putPictrueObj(uploadPath, tempFile);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
 
+
             // 5. 封装返回结果
             UploadPictureResult result = new UploadPictureResult();
             int picWidth = imageInfo.getWidth();
@@ -86,13 +90,25 @@ public class FileManger {
             double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();
 
             result.setPicName(FileUtil.mainName(originFilename));
+            //返回缩略图结果
+            ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
+            List<CIObject> objectList = processResults.getObjectList();
+            if (CollUtil.isNotEmpty(objectList)) {
+                CIObject comObj = objectList.get(0);
+                CIObject tubObj = comObj;
+                //如果没有生成缩略图则将原图地址给到缩略图
+                if (objectList.size() > 1) {
+                    tubObj = objectList.get(1);
+                }
+                //设置缩略图地址
+                result.setThumbnailUrl(cosConfig.getHost() + "/" + tubObj.getKey());
+            }
             result.setPicWidth(picWidth);
             result.setPicHeight(picHeight);
             result.setPicScale(picScale);
             result.setPicFormat(imageInfo.getFormat());
             result.setPicSize(FileUtil.size(tempFile));
             result.setUrl(cosConfig.getHost() + "/" + uploadPath);
-
             return result;
 
         } catch (Exception e) {
@@ -196,7 +212,8 @@ public class FileManger {
 
     /**
      * 校验文件
-     * @param multipartFile 文件URL
+     *
+     * @param multipartFile  文件URL
      * @param skipValidation 是否跳过验证（用于批量操作）
      */
     public void validPicture(String multipartFile, boolean skipValidation) {

@@ -80,6 +80,10 @@ public class YunPicture {
      */
     private Long userId;
     /**
+     * 缩略图url
+     */
+    private String thumbnailUrl;
+    /**
      * 审核人id
      */
     private Long reviewId;

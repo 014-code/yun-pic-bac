@@ -22,6 +22,7 @@ import com.mashang.yunbac.web.entity.vo.picture.YunPictureVo;
 import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
 import com.mashang.yunbac.web.exception.BusinessException;
 import com.mashang.yunbac.web.exception.ThrowUtils;
+import com.mashang.yunbac.web.manger.CosManger;
 import com.mashang.yunbac.web.manger.FileManger;
 import com.mashang.yunbac.web.manger.RedisManger;
 import com.mashang.yunbac.web.mapper.YunPictureMapper;
@@ -37,6 +38,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -70,6 +72,8 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
 
     //本地缓存构造(五分钟过期时间 + 最大存储10000条数据)
     private final Cache<String, String> LOCAL_CACHE = Caffeine.newBuilder().initialCapacity(1024).maximumSize(10000L).expireAfterWrite(5L, TimeUnit.MINUTES).build();
+    @Autowired
+    private CosManger cosManger;
 
     /**
      * 上传图片
@@ -120,6 +124,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setCreateTime(new Date());
         yunPicture.setUpdateTime(new Date());
         yunPicture.setUrl(uploadPictureResult.getUrl());
+        yunPicture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
         //为管理员则直接通过
         if (yunUser.getRole() != null && yunUser.getRole().equals(UserRoleEnum.ADMIN.getValue())) {
             yunPicture.setStatus("1");
@@ -214,41 +219,41 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         return new ResultTUtil().success(resultMsg);
     }
 
-//    @Override
-//    public RowsTUtil<YunPictureVo> listVo(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam) {
-//        //构造redis的key
-//        String queryCondition = JSONUtil.toJsonStr(getPictrueListParam);
-//        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-//        String redisKey = "yunpic:listVo:" + hashKey;
-//        //1.先查询本地缓存
-//        String ifPresent = LOCAL_CACHE.getIfPresent(redisKey);
-//        if (ifPresent != null) {
-//            List<YunPictureVo> bean = JSONUtil.toBean(ifPresent, List.class);
-//            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
-//        }
-//        //2.查询redis中的
-//        //拿到redis的string操作对象，并指定map类型
-//        ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
-//        String cached = stringStringValueOperations.get(redisKey);
-//        //如果有则将其解析化为对象
-//        if (cached != null) {
-//            List<YunPictureVo> bean = JSONUtil.toBean(stringStringValueOperations.get(cached), List.class);
-//            //存入本地缓存
-//            LOCAL_CACHE.put(redisKey, cached);
-//            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
-//        }
-//        List<YunPictureVo> yunPictureVos = selectList(pageInfoParam, getPictrueListParam);
-//        PageInfo<YunPicture> pageList = getPage(pageInfoParam, getPictrueListParam);
-//        //变成json字符串
-//        String jsonStr = JSONUtil.toJsonStr(yunPictureVos);
-//        //设置过期时间
-//        int cacheTime = RandomUtil.randomInt(0, 300);
-//        //缓存入redis
-//        stringStringValueOperations.set(redisKey, jsonStr, cacheTime, TimeUnit.SECONDS);
-//        //更新本地缓存
-//        LOCAL_CACHE.put(redisKey, jsonStr);
-//        return new RowsTUtil<YunPictureVo>().success("查询成功", pageList.getTotal(), yunPictureVos);
-//    }
+    @Override
+    public RowsTUtil<YunPictureVo> listVo(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam) {
+        //构造redis的key
+        String queryCondition = JSONUtil.toJsonStr(getPictrueListParam);
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String redisKey = "yunpic:listVo:" + hashKey;
+        //1.先查询本地缓存
+        String ifPresent = LOCAL_CACHE.getIfPresent(redisKey);
+        if (ifPresent != null) {
+            List<YunPictureVo> bean = JSONUtil.toList(ifPresent, YunPictureVo.class);
+            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
+        }
+        //2.查询redis中的
+        //拿到redis的string操作对象，并指定map类型
+        ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
+        String cached = stringStringValueOperations.get(redisKey);
+        //如果有则将其解析化为对象
+        if (cached != null) {
+            List<YunPictureVo> bean = JSONUtil.toList(stringStringValueOperations.get(cached), YunPictureVo.class);
+            //存入本地缓存
+            LOCAL_CACHE.put(redisKey, cached);
+            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
+        }
+        List<YunPictureVo> yunPictureVos = selectList(pageInfoParam, getPictrueListParam);
+        PageInfo<YunPicture> pageList = getPage(pageInfoParam, getPictrueListParam);
+        //变成json字符串
+        String jsonStr = JSONUtil.toJsonStr(yunPictureVos);
+        //设置过期时间
+        int cacheTime = RandomUtil.randomInt(0, 300);
+        //缓存入redis
+        stringStringValueOperations.set(redisKey, jsonStr, cacheTime, TimeUnit.SECONDS);
+        //更新本地缓存
+        LOCAL_CACHE.put(redisKey, jsonStr);
+        return new RowsTUtil<YunPictureVo>().success("查询成功", pageList.getTotal(), yunPictureVos);
+    }
 
     /**
      * 查询数据库
@@ -302,60 +307,80 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         return list;
     }
 
-    /**
-     * 解决缓存击穿的互斥锁
-     *
-     * @return
-     */
-    public RowsTUtil<YunPictureVo> listVo(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam) {
-        List<YunPictureVo> yunPictureVos = new ArrayList<>();
-        //构造redis的key
-        String queryCondition = JSONUtil.toJsonStr(getPictrueListParam);
-        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String key = "yunpic:listVo:" + hashKey;
-        //从Redis查询缓存
-        String picJson = stringRedisTemplate.opsForValue().get(key);  //JSON格式
-        //判断是否存在
-        if (StrUtil.isNotBlank(picJson)) {
-            //存在则直接返回
-            List<YunPictureVo> bean = JSONUtil.toBean(picJson, List.class);
-            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
+//    /**
+//     * 解决缓存击穿的互斥锁
+//     *
+//     * @return
+//     */
+//    public RowsTUtil<YunPictureVo> listVo(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam) {
+//        List<YunPictureVo> yunPictureVos = new ArrayList<>();
+//        //构造redis的key
+//        String queryCondition = JSONUtil.toJsonStr(getPictrueListParam);
+//        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+//        String key = "yunpic:listVo:" + hashKey;
+//        //从Redis查询缓存
+//        String picJson = stringRedisTemplate.opsForValue().get(key);  //JSON格式
+//        //判断是否存在
+//        if (StrUtil.isNotBlank(picJson)) {
+//            //存在则直接返回
+//            List<YunPictureVo> bean = JSONUtil.toBean(picJson, List.class);
+//            return new RowsTUtil<YunPictureVo>().success("查询成功", (long) bean.size(), bean);
+//        }
+//        ThrowUtils.throwIf(picJson != null, ErrorCode.NOT_FOUND_ERROR);
+//        //4.缓存重建
+//        //4.1获得互斥锁
+//        String lockKey = "lock:shop" + hashKey;
+//        List<YunPictureVo> picList = null;
+//        try {
+//            // 尝试获取锁，等待10秒，锁持有30秒
+//            boolean isLock = redisManger.tryLock(lockKey, 10, 30, TimeUnit.SECONDS);
+//            //判断是否获取成功
+//            if (!isLock) {
+//                //4.3失败，则休眠并重试
+//                Thread.sleep(50);
+//                return listVo(pageInfoParam, getPictrueListParam);
+//            }
+//            //成功查询数据库
+//            yunPictureVos.addAll(selectList(pageInfoParam, getPictrueListParam));
+//            //设置过期时间
+//            int cacheTime = RandomUtil.randomInt(0, 300);
+//            //不存在则返回错误
+//            if (yunPictureVos == null) {
+//                //将空值写入Redis
+//                stringRedisTemplate.opsForValue().set(key, "", cacheTime, TimeUnit.SECONDS);
+//                //return Result.fail("暂无该商铺信息");
+//                ThrowUtils.throwIf(yunPictureVos == null, ErrorCode.NOT_FOUND_ERROR);
+//            }
+//            //存在，写入Redis
+//            stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(yunPictureVos), cacheTime, TimeUnit.SECONDS);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        } finally {
+//            //释放互斥锁
+//            redisManger.unlock(lockKey);
+//        }
+//        PageInfo<YunPicture> pageList = getPage(pageInfoParam, getPictrueListParam);
+//        //返回分页对象
+//        return new RowsTUtil<YunPictureVo>().success("查询成功", pageList.getTotal(), yunPictureVos);
+//    }
+
+    @Async
+    @Override
+    public void clearPicFile(YunPicture yunPicture) {
+        //判断该图片是否被多条记录使用
+        String url = yunPicture.getUrl();
+        QueryWrapper<YunPicture> yunPictureQueryWrapper = new QueryWrapper<>();
+        yunPictureQueryWrapper.eq("url", url);
+        Long l = yunPictureMapper.selectCount(yunPictureQueryWrapper);
+        //不止一条记录用到了该图片，不清理
+        if (l > 1) {
+            return;
         }
-        ThrowUtils.throwIf(picJson != null, ErrorCode.NOT_FOUND_ERROR);
-        //4.缓存重建
-        //4.1获得互斥锁
-        String lockKey = "lock:shop" + hashKey;
-        List<YunPictureVo> picList = null;
-        try {
-            // 尝试获取锁，等待10秒，锁持有30秒
-            boolean isLock = redisManger.tryLock(lockKey, 10, 30, TimeUnit.SECONDS);
-            //判断是否获取成功
-            if (!isLock) {
-                //4.3失败，则休眠并重试
-                Thread.sleep(50);
-                return listVo(pageInfoParam, getPictrueListParam);
-            }
-            //成功查询数据库
-            yunPictureVos.addAll(selectList(pageInfoParam, getPictrueListParam));
-            //设置过期时间
-            int cacheTime = RandomUtil.randomInt(0, 300);
-            //不存在则返回错误
-            if (yunPictureVos == null) {
-                //将空值写入Redis
-                stringRedisTemplate.opsForValue().set(key, "", cacheTime, TimeUnit.SECONDS);
-                //return Result.fail("暂无该商铺信息");
-                ThrowUtils.throwIf(yunPictureVos == null, ErrorCode.NOT_FOUND_ERROR);
-            }
-            //存在，写入Redis
-            stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(yunPictureVos), cacheTime, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
-            //释放互斥锁
-            redisManger.unlock(lockKey);
+        cosManger.delObj(yunPicture.getUrl());
+        //清理缩略图
+        String thumbnailUrl = yunPicture.getThumbnailUrl();
+        if (StrUtil.isNotBlank(thumbnailUrl)) {
+            cosManger.delObj(yunPicture.getThumbnailUrl());
         }
-        PageInfo<YunPicture> pageList = getPage(pageInfoParam, getPictrueListParam);
-        //返回分页对象
-        return new RowsTUtil<YunPictureVo>().success("查询成功", pageList.getTotal(), yunPictureVos);
     }
 }

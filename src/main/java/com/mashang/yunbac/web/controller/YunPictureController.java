@@ -28,8 +28,8 @@ import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
 import com.mashang.yunbac.web.exception.BusinessException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +52,8 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("yunPicture")
-@Api(tags = "图片模块")
+@RequestMapping("/yunPicture")
+@Tag(name = "图片模块")
 public class YunPictureController {
     /**
      * 服务对象
@@ -63,7 +63,7 @@ public class YunPictureController {
     @Autowired
     private YunUserServiceImpl yunUserService;
 
-    @ApiOperation("上传图片(并返回图片信息)")
+    @Operation(summary = "上传图片(并返回图片信息)")
     @PostMapping("/uploadPic")
 //    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, HttpServletRequest request) {
@@ -92,7 +92,7 @@ public class YunPictureController {
         return yunPictureService.uploadPic(file, picId, yunUser, null);
     }
 
-    @ApiOperation("url上传图片(并返回图片信息)")
+    @Operation(summary = "url上传图片(并返回图片信息)")
     @PostMapping("/uploadPic/url")
 //    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public ResultTUtil<YunPictureVo> uploadPicUrl(String file, Long picId, HttpServletRequest request) {
@@ -122,7 +122,7 @@ public class YunPictureController {
         return yunPictureService.uploadPic(file, picId, yunUser, null);
     }
 
-    @ApiOperation("分页查询图片列表-管理员")
+    @Operation(summary = "分页查询图片列表-管理员")
     @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public RowsTUtil<YunPicture> list(@Validated PageInfoParam pageInfoParam, @Validated GetPictrueListParam getPictrueListParam) {
@@ -154,7 +154,7 @@ public class YunPictureController {
         return new RowsTUtil<YunPicture>().success("查询成功", pageList.getTotal(), pageList.getList());
     }
 
-    @ApiOperation("查询图片详情-管理员")
+    @Operation(summary = "查询图片详情-管理员")
     @GetMapping("/detail")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil<YunPictureUserVo> detail(Long picId) {
@@ -168,7 +168,7 @@ public class YunPictureController {
         return new ResultTUtil<YunPictureUserVo>().success("查询成功", yunPictureUserVo);
     }
 
-    @ApiOperation("更新图片信息-管理员")
+    @Operation(summary = "更新图片信息-管理员")
     @PutMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil update(@RequestBody @Validated UpdatePictrueParam updatePictrueParam) {
@@ -182,7 +182,7 @@ public class YunPictureController {
         return new ResultTUtil<>().success("修改成功");
     }
 
-    @ApiOperation("删除图片-管理员")
+    @Operation(summary = "删除图片-管理员")
     @DeleteMapping("/del/{picId}")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil del(@PathVariable Long picId) {
@@ -193,14 +193,14 @@ public class YunPictureController {
         return new ResultTUtil<>().success("删除成功");
     }
 
-    @ApiOperation("分页获取图片")
+    @Operation(summary = "分页获取图片")
     @PostMapping("/list/vo")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public RowsTUtil<YunPictureVo> listVo(@Validated PageInfoParam pageInfoParam, @Validated GetPictrueListParam getPictrueListParam) {
         return yunPictureService.listVo(pageInfoParam, getPictrueListParam);
     }
 
-    @ApiOperation("查询图片详情")
+    @Operation(summary = "查询图片详情")
     @GetMapping("/detail/vo")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public ResultTUtil<YunPictureUserVos> detailVo(Long picId) {
@@ -222,7 +222,7 @@ public class YunPictureController {
         return new ResultTUtil<YunPictureUserVos>().success("查询成功", yunPictureUserVo);
     }
 
-    @ApiOperation("修改图片")
+    @Operation(summary = "修改图片")
     @PutMapping("/update/vo")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public ResultTUtil updateVo(@RequestBody @Validated UpdatePictrueParam updatePictrueParam) {
@@ -238,7 +238,7 @@ public class YunPictureController {
         return new ResultTUtil<>().success("修改成功");
     }
 
-    @ApiOperation("查询所有标签和类别")
+    @Operation(summary = "查询所有标签和类别")
     @GetMapping("/tags/all")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public ResultTUtil<YunCategoryTagVo> allTags() {
@@ -250,7 +250,7 @@ public class YunPictureController {
         return new ResultTUtil<YunCategoryTagVo>().success("查询成功", yunCategoryTagVo);
     }
 
-    @ApiOperation("审核图片")
+    @Operation(summary = "审核图片")
     @PutMapping("/review")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public ResultTUtil review(@RequestBody @Validated ReviewPicParam reviewPicParam, HttpServletRequest request) {
@@ -270,7 +270,7 @@ public class YunPictureController {
         return new ResultTUtil().success("审核成功");
     }
 
-    @ApiOperation("批量抓取图片")
+    @Operation(summary = "批量抓取图片")
     @PostMapping("/capture")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil capture(@RequestBody @Validated CaptureParam captureParam) {

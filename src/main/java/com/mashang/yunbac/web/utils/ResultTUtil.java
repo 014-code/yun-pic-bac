@@ -1,8 +1,7 @@
 package com.mashang.yunbac.web.utils;
 
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,14 +14,14 @@ import org.springframework.stereotype.Component;
 @NoArgsConstructor//无参
 @AllArgsConstructor//全参
 @Component//其它类注解
-@ApiModel
+@Schema(name = "ResultTUtil")
 public class ResultTUtil<T> {
 
-    @ApiModelProperty("响应消息")
+    @Schema(description = "响应消息")
     private String msg;//响应消息
-    @ApiModelProperty("响应状态码")
+    @Schema(description = "响应状态码")
     private Integer code;//响应状态码
-    @ApiModelProperty("响应内容")
+    @Schema(description = "响应内容")
     private T data;//响应内容
 
     //响应为成功

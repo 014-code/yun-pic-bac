@@ -1,16 +1,22 @@
 package com.mashang.yunbac.web.authlnterceptor;
 
+import com.mashang.yunbac.web.manger.RedisManger;
 import com.mashang.yunbac.web.utils.JWTUtil;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import javax.annotation.Resource;
+
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
+
+    @Resource
+    private RedisManger redisManger;
 
     /**
      * 要验证用户是否有权限，那么就要验证token
@@ -42,6 +48,18 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         // 从头部获取我们的token
         String token = request.getHeader("Authorization");
+        if (token == null || token.trim().isEmpty()) {
+            // 尝试从 Cookie 中读取 Authorization
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie c : cookies) {
+                    if ("Authorization".equals(c.getName())) {
+                        token = c.getValue();
+                        break;
+                    }
+                }
+            }
+        }
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json;charset=utf-8");
 
@@ -59,9 +77,24 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         Long userId = JWTUtil.getUserId(token);
-        if (userId == null) {
+        if (userId == null || userId == 0L) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"code\":401,\"message\":\"用户不存在或token过期\"}");
+            return false;
+        }
+
+        // 校验 Redis 中的会话是否存在（支持服务端踢人/过期）
+        String redisKey = "login:token:" + userId;
+        String serverToken = redisManger.get(redisKey);
+        if (serverToken == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"code\":401,\"message\":\"登录态已过期，请重新登录\"}");
+            return false;
+        }
+        // 可选：比对header的token与服务端保存是否一致（单端登录）
+        if (!serverToken.equals(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"code\":401,\"message\":\"账号在其他地方登录\"}");
             return false;
         }
 

@@ -16,5 +16,10 @@
       <option name="name" value="JBoss Community repository" />
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="Knife4j" />
+      <option name="name" value="Knife4j" />
+      <option name="url" value="https://knife4j.oss-cn-hangzhou.aliyuncs.com/repository/knife4j/" />
+    </remote-repository>
   </component>
 </project>

@@ -10,6 +10,7 @@ import com.mashang.yunbac.web.entity.params.user.RegisterParam;
 import com.mashang.yunbac.web.exception.BusinessException;
 import com.mashang.yunbac.web.mapper.YunUserMapper;
 import com.mashang.yunbac.web.service.YunUserService;
+import com.mashang.yunbac.web.manger.RedisManger;
 import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ import java.util.regex.Pattern;
 public class YunUserServiceImpl extends ServiceImpl<YunUserMapper, YunUser> implements YunUserService {
     @Resource
     private YunUserMapper yunUserMapper;
+    @Resource
+    private RedisManger redisManger;
 
     // 加密前缀
     private static final String SALT = "user";
@@ -82,7 +85,9 @@ public class YunUserServiceImpl extends ServiceImpl<YunUserMapper, YunUser> impl
         if (user == null) throw new BusinessException(ErrorCode.SYSTEM_ERROR, "账号或密码错误!");
         //创建token
         String token = JWTUtil.createToken(user);
-        //登录成功
+        // 存储到 Redis，key 绑定用户 + token 以便服务端强控，TTL 与 token 一致（2天）
+        String redisKey = "login:token:" + user.getUserId();
+        redisManger.setWithTTL(redisKey, token, 2, java.util.concurrent.TimeUnit.DAYS);
         return new ResultTUtil<String>().success("登录成功", token);
     }
 

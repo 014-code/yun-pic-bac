@@ -22,6 +22,27 @@ public class RedisManger {
 
 
     /**
+     * 设置字符串键值并携带过期时间
+     */
+    public void setWithTTL(String key, String value, long ttl, TimeUnit unit) {
+        stringRedisTemplate.opsForValue().set(key, value, ttl, unit);
+    }
+
+    /**
+     * 获取字符串键值
+     */
+    public String get(String key) {
+        return stringRedisTemplate.opsForValue().get(key);
+    }
+
+    /**
+     * 删除键
+     */
+    public void delete(String key) {
+        stringRedisTemplate.delete(key);
+    }
+
+    /**
      * 尝试获取锁-简单坂
      *
      * @param key

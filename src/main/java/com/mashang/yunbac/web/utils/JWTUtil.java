@@ -21,23 +21,7 @@ public class JWTUtil {
     // token的有效时间 2 天
     private static final Integer TIME_OUT_DAY = 2;
 
-    // 存储失效的 Token（实际项目建议用 Redis）
-    private static Set<String> tokenBlacklist = new HashSet<>();
-
-    /**
-     * 使 Token 失效（加入黑名单）
-     */
-    public static Boolean invalidateToken(String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        boolean add = tokenBlacklist.add(token);
-        if (add) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    // 不再使用本地黑名单，统一交由 Redis 管理
 
     /**
      * 创建token
