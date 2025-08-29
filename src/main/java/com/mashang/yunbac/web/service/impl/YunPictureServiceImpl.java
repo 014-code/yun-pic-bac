@@ -1,6 +1,7 @@
 package com.mashang.yunbac.web.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -11,6 +12,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.mashang.yunbac.web.entity.domian.YunSpace;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.UserRoleEnum;
@@ -26,6 +28,7 @@ import com.mashang.yunbac.web.manger.CosManger;
 import com.mashang.yunbac.web.manger.FileManger;
 import com.mashang.yunbac.web.manger.RedisManger;
 import com.mashang.yunbac.web.mapper.YunPictureMapper;
+import com.mashang.yunbac.web.mapper.YunSpaceMapper;
 import com.mashang.yunbac.web.service.YunPictureService;
 import com.mashang.yunbac.web.entity.domian.YunPicture;
 import com.mashang.yunbac.web.utils.ResultTUtil;
@@ -40,6 +43,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,11 +73,17 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private RedisManger redisManger;
+    @Resource
+    private TransactionTemplate transactionTemplate;
 
     //本地缓存构造(五分钟过期时间 + 最大存储10000条数据)
     private final Cache<String, String> LOCAL_CACHE = Caffeine.newBuilder().initialCapacity(1024).maximumSize(10000L).expireAfterWrite(5L, TimeUnit.MINUTES).build();
     @Autowired
     private CosManger cosManger;
+    @Autowired
+    private YunSpaceMapper yunSpaceMapper;
+    @Autowired
+    private YunSpaceServiceImpl yunSpaceService;
 
     /**
      * 上传图片
@@ -84,9 +94,11 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
      * @return
      */
     @Override
-    public ResultTUtil<YunPictureVo> uploadPic(Object file, Long picId, YunUser yunUser, String picName) {
+    public ResultTUtil<YunPictureVo> uploadPic(Object file, Long picId, YunUser yunUser, String picName, Long spaceId) {
         //判断传入的用户信息是否有登录，没则直接抛异常
         ThrowUtils.throwIf(yunUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        //校验空间是否存在
+        spaceExit(spaceId, yunUser.getUserId());
         //判断是新增图片还是更新图片-有id就是更新,如果是更新则需要校验图片是否存在，不存在也要抛异常
         if (picId != null) {
             //库表查是否存在
@@ -96,7 +108,12 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
             ThrowUtils.throwIf(yunPicture == null, ErrorCode.NOT_FOUND_ERROR);
         }
         //使用filemanger得上传图片，还得划分目录，这里划分至public目录即可 + 用户id
-        String format = "public/" + yunUser.getUserId();
+        String format;
+        if (spaceId == null) {
+            format = "public/" + yunUser.getUserId();
+        }else {
+            format = "space/" + spaceId;
+        }
         UploadPictureResult uploadPictureResult = new UploadPictureResult();
         //区分上传的是文件类型还是url
         if (file instanceof MultipartFile) {
@@ -125,14 +142,30 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setUpdateTime(new Date());
         yunPicture.setUrl(uploadPictureResult.getUrl());
         yunPicture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
+        //校验是否超额
+        quota(spaceId, yunUser.getUserId());
+        yunPicture.setSpaceId(spaceId);
         //为管理员则直接通过
         if (yunUser.getRole() != null && yunUser.getRole().equals(UserRoleEnum.ADMIN.getValue())) {
             yunPicture.setStatus("1");
         }
         //是否为更新
         if (picId != null) {
+            YunPicture byId = this.getById(picId);
+            //仅空间人和管理员可以编辑
+            //还得不是上传到公共图库的情况下
+            if (spaceId != null) {
+                if (!byId.getSpaceId().equals(spaceId) && !yunUser.getRole().equals(UserRoleEnum.ADMIN.getValue())) {
+                    throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "空间id不一致");
+                }
+                //校验上传的图片空间id是否和现在传入的一致，不一致则直接将当前的set为原先的
+            }else {
+                yunPicture.setSpaceId(spaceId);
+            }
             yunPicture.setPicId(picId);
             yunPictureMapper.updateById(yunPicture);
+            //更新额度方法
+            updateQuota(spaceId, yunUser.getUserId(), yunPicture);
         } else {
             yunPictureMapper.insert(yunPicture);
             yunPicture.setPicId(yunPictureMapper.selectById(yunPicture.getPicId()).getPicId());
@@ -141,6 +174,55 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         BeanUtils.copyProperties(yunPicture, yunPictureVo);
         yunPictureVo.setPicId(yunPicture.getPicId());
         return new ResultTUtil<YunPictureVo>().success("查询成功", yunPictureVo);
+    }
+
+    /**
+     * 更新额度方法
+     */
+    private void updateQuota(Long yunSpaceId, Long userId, YunPicture yunPicture) {
+        //开启事务
+        transactionTemplate.execute(status -> {
+            if (yunSpaceId != null) {
+                boolean update = yunSpaceService.lambdaUpdate()
+                        .eq(YunSpace::getSpaceId, yunSpaceId)
+                        .setSql("total_size = total_size + " + yunPicture.getPicSize())
+                        .setSql("total_count = total_count + 1")
+                        .update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+            }
+            return null;
+        }
+        );
+    }
+
+    /**
+     * 校验空间额度方法
+     */
+    private void quota(Long yunSpaceId, Long userId) {
+        if (yunSpaceId != null) {
+            YunSpace yunSpace = yunSpaceMapper.selectById(yunSpaceId);
+            //校验空间是否存在
+            ThrowUtils.throwIf(yunSpace == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+            //是否为空间管理员
+            if (!yunSpace.getUserId().equals(userId)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权上传图片");
+            }
+            //校验额度
+            ThrowUtils.throwIf(yunSpace.getMaxCount() <= yunSpace.getTotalCount(), ErrorCode.OPERATION_ERROR, "空间条数不足");
+            ThrowUtils.throwIf(yunSpace.getMaxSize().compareTo(yunSpace.getTotalSize()) <= 0, ErrorCode.OPERATION_ERROR, "空间大小不足");
+        }
+    }
+
+    /**
+     * 校验空间是否存在
+     */
+    private void spaceExit(Long spaceId, Long userId) {
+        if (spaceId != null) {
+            YunSpace yunSpace = yunSpaceMapper.selectById(spaceId);
+            ThrowUtils.throwIf(yunSpace == null, ErrorCode.NOT_FOUND_ERROR);
+            //必须是空间创建人才能上传
+            ThrowUtils.throwIf(yunSpace.getUserId().equals(userId), ErrorCode.NO_AUTH_ERROR, "没有该空间权限");
+        }
     }
 
     /**
@@ -201,7 +283,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
                     pciName = prefix;
                 }
                 //调用url上传，跳过验证避免网络问题
-                uploadPic(src, null, yunUserVo, pciName + uploadCount);
+                uploadPic(src, null, yunUserVo, pciName + uploadCount, null);
                 uploadCount++;
                 successCount++;
                 //数量达到则跳出
@@ -302,6 +384,8 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunUserVoQueryWrapper.like(getPictrueListParam.getTags() != null, "tags", getPictrueListParam.getTags());
         yunUserVoQueryWrapper.like(getPictrueListParam.getIntroduction() != null, "introduction", getPictrueListParam.getIntroduction());
         yunUserVoQueryWrapper.like(getPictrueListParam.getPicFormat() != null, "pic_format", getPictrueListParam.getPicFormat());
+        yunUserVoQueryWrapper.eq(ObjectUtil.isNotEmpty(getPictrueListParam.getSpaceId()), "space_id", getPictrueListParam.getSpaceId());
+        yunUserVoQueryWrapper.isNull(getPictrueListParam.getNullSpace(),  "space_id");
         yunUserVoQueryWrapper.eq("status", "1");
         List<YunPicture> list = yunPictureMapper.selectList(yunUserVoQueryWrapper);
         return list;

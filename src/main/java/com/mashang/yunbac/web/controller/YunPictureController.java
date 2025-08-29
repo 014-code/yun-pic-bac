@@ -9,6 +9,7 @@ import com.github.pagehelper.PageInfo;
 import com.mashang.yunbac.web.annotation.AuthCheck;
 import com.mashang.yunbac.web.constant.UserConstant;
 import com.mashang.yunbac.web.entity.domian.YunPicture;
+import com.mashang.yunbac.web.entity.domian.YunSpace;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.PicStatusEnum;
@@ -23,6 +24,7 @@ import com.mashang.yunbac.web.entity.vo.picture.YunPictureUserVos;
 import com.mashang.yunbac.web.entity.vo.picture.YunPictureVo;
 import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
 import com.mashang.yunbac.web.exception.ThrowUtils;
+import com.mashang.yunbac.web.service.impl.YunSpaceServiceImpl;
 import com.mashang.yunbac.web.service.impl.YunUserServiceImpl;
 import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
@@ -33,6 +35,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.mashang.yunbac.web.service.YunPictureService;
@@ -62,11 +65,15 @@ public class YunPictureController {
     private YunPictureService yunPictureService;
     @Autowired
     private YunUserServiceImpl yunUserService;
+    @Autowired
+    private YunSpaceServiceImpl yunSpaceService;
+    @Resource
+    private TransactionTemplate transactionTemplate;
 
     @Operation(summary = "上传图片(并返回图片信息)")
     @PostMapping("/uploadPic")
 //    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, HttpServletRequest request) {
+    public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, HttpServletRequest request, Long spaceId) {
         // 从请求头获取token
         String token = request.getHeader("Authorization");
         if (token == null || token.trim().isEmpty()) {
@@ -89,13 +96,13 @@ public class YunPictureController {
         if (yunUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
         }
-        return yunPictureService.uploadPic(file, picId, yunUser, null);
+        return yunPictureService.uploadPic(file, picId, yunUser, null, spaceId);
     }
 
     @Operation(summary = "url上传图片(并返回图片信息)")
     @PostMapping("/uploadPic/url")
 //    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
-    public ResultTUtil<YunPictureVo> uploadPicUrl(String file, Long picId, HttpServletRequest request) {
+    public ResultTUtil<YunPictureVo> uploadPicUrl(String file, Long picId, HttpServletRequest request, Long spaceId) {
         // 从请求头获取token
         String token = request.getHeader("Authorization");
         if (token == null || token.trim().isEmpty()) {
@@ -119,7 +126,7 @@ public class YunPictureController {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
         }
 
-        return yunPictureService.uploadPic(file, picId, yunUser, null);
+        return yunPictureService.uploadPic(file, picId, yunUser, null, spaceId);
     }
 
     @Operation(summary = "分页查询图片列表-管理员")
@@ -171,8 +178,25 @@ public class YunPictureController {
     @Operation(summary = "更新图片信息-管理员")
     @PutMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public ResultTUtil update(@RequestBody @Validated UpdatePictrueParam updatePictrueParam) {
+    public ResultTUtil update(@RequestBody @Validated UpdatePictrueParam updatePictrueParam, HttpServletRequest request) {
         ThrowUtils.throwIf(updatePictrueParam.getPicId() == null, ErrorCode.NOT_FOUND_ERROR);
+        //校验图片是否为公共图库，是的话只有上传人和管理员可以，是私有空间的话只能空间管理者才行
+        //拿到当前登录用户
+        String token = request.getHeader("Authorization");
+        Long userId = JWTUtil.getUserId(token);
+        YunPicture byId = yunPictureService.getById(updatePictrueParam.getPicId());
+        YunUser yunUser = yunUserService.getById(byId.getUserId());
+        if (byId.getSpaceId() == null) {
+            //公共图库
+            if (!byId.getUserId().equals(userId) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限修改该图片");
+            }
+        }else {
+            YunSpace yunSpace = yunSpaceService.getById(byId.getSpaceId());
+            if (!yunSpace.getUserId().equals(userId)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无修改删除该图片");
+            }
+        }
         YunPicture yunPicture = new YunPicture();
         BeanUtils.copyProperties(updatePictrueParam, yunPicture);
         String jsonStr = JSONUtil.toJsonStr(updatePictrueParam.getTags());
@@ -185,11 +209,28 @@ public class YunPictureController {
     @Operation(summary = "删除图片-管理员")
     @DeleteMapping("/del/{picId}")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public ResultTUtil del(@PathVariable Long picId) {
+    public ResultTUtil del(@PathVariable Long picId, HttpServletRequest request) {
+        //拿到当前登录用户
+        String token = request.getHeader("Authorization");
+        Long userId = JWTUtil.getUserId(token);
         YunPicture byId = yunPictureService.getById(picId);
+        YunUser yunUser = yunUserService.getById(byId.getUserId());
         ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        //校验图片是否为公共图库，是的话只有上传人和管理员可以，是私有空间的话只能空间管理者才行
+        if (byId.getSpaceId() == null) {
+            //公共图库
+            if (!byId.getUserId().equals(userId) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除该图片");
+            }
+        }else {
+            YunSpace yunSpace = yunSpaceService.getById(byId.getSpaceId());
+            if (!yunSpace.getUserId().equals(userId)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除该图片");
+            }
+        }
         boolean b = yunPictureService.removeById(byId);
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
+        updateQuota(byId.getSpaceId(), userId, byId);
         return new ResultTUtil<>().success("删除成功");
     }
 
@@ -203,10 +244,27 @@ public class YunPictureController {
     @Operation(summary = "查询图片详情")
     @GetMapping("/detail/vo")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
-    public ResultTUtil<YunPictureUserVos> detailVo(Long picId) {
+    public ResultTUtil<YunPictureUserVos> detailVo(Long picId, HttpServletRequest request) {
         YunPictureUserVos yunPictureUserVo = new YunPictureUserVos();
         YunPicture byId = yunPictureService.getById(picId);
         ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        //拿到当前登录用户
+        String token = request.getHeader("Authorization");
+        Long userId = JWTUtil.getUserId(token);
+        YunUser yunUser = yunUserService.getById(byId.getUserId());
+        ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        //校验图片是否为公共图库，是的话只有上传人和管理员可以，是私有空间的话只能空间管理者才行
+        if (byId.getSpaceId() == null) {
+            //公共图库
+            if (!byId.getUserId().equals(userId) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权查看该图片");
+            }
+        }else {
+            YunSpace yunSpace = yunSpaceService.getById(byId.getSpaceId());
+            if (!yunSpace.getUserId().equals(userId)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权查看该图片");
+            }
+        }
         //关联用户信息
         YunUser user = yunUserService.getById(byId.getUserId());
         YunPictureVo yunPictureVo = new YunPictureVo();
@@ -282,6 +340,25 @@ public class YunPictureController {
         //防爬虫-最多50条
         ThrowUtils.throwIf(captureParam.getNum() > 50, ErrorCode.NOT_FOUND_ERROR, "最大数量不能超过50条");
         return yunPictureService.capture(captureParam, captureParam.getYunUser());
+    }
+
+    /**
+     * 更新额度方法
+     */
+    private void updateQuota(Long yunSpaceId, Long userId, YunPicture yunPicture) {
+        //开启事务
+        transactionTemplate.execute(status -> {
+                    if (yunSpaceId != null) {
+                        boolean update = yunSpaceService.lambdaUpdate()
+                                .eq(YunSpace::getSpaceId, yunSpaceId)
+                                .setSql("total_size = total_size - " + yunPicture.getPicSize())
+                                .setSql("total_count = total_count - 1")
+                                .update();
+                        ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+                    }
+                    return null;
+                }
+        );
     }
 
 }

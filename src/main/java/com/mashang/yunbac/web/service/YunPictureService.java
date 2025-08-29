@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface YunPictureService extends IService<YunPicture> {
 
 
-    ResultTUtil<YunPictureVo> uploadPic(Object file, Long picId, YunUser yunUser, String picName);
+    ResultTUtil<YunPictureVo> uploadPic(Object file, Long picId, YunUser yunUser, String picName, Long spaceId);
 
     ResultTUtil capture(CaptureParam captureParam, YunUser yunUserVo);
 

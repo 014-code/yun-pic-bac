@@ -67,6 +67,16 @@ public class GetPictrueListParam {
      */
     @Schema(description = "搜索词(同时搜索名称简介)", required = false)
     private String seacherText;
+    /**
+     * 空间id
+     */
+    @Schema(description = "空间id", required = false)
+    private Long spaceId;
+    /**
+     * 搜索词
+     */
+    @Schema(description = "是否只查询spaceId为null的数据(是就查公共图库，不是就查对应的)", required = false)
+    private Boolean nullSpace;
 
 }
 

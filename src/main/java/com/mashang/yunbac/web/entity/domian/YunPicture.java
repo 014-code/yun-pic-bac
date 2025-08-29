@@ -68,6 +68,10 @@ public class YunPicture {
      */
     private String picFormat;
     /**
+     * 空间id
+     */
+    private Long spaceId;
+    /**
      * 图片状态
      */
     private String status;
