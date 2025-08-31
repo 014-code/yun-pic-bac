@@ -1,5 +1,6 @@
 package com.mashang.yunbac.web.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
@@ -21,7 +22,7 @@ public class Knife4jConfig {
                         .description("智能协同云图库API接口文档")
                         .contact(new Contact().name("014")))
                 // 添加安全方案定义
-                .components(new io.swagger.v3.oas.models.Components()
+                .components(new Components()
                         .addSecuritySchemes("Authorization", new SecurityScheme()
                                 .type(SecurityScheme.Type.APIKEY)
                                 .name("Authorization")
@@ -50,7 +51,7 @@ public class Knife4jConfig {
     @Bean
     public GroupedOpenApi webApi() {
         return GroupedOpenApi.builder()
-                .group("Web接口")
+                .group("web")
                 .packagesToScan("com.mashang.yunbac.web.controller") // 指定控制器包路径
                 .build();
     }

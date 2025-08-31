@@ -1,9 +1,12 @@
 package com.mashang.yunbac.web.entity.params.picture;
 
+import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -14,8 +17,8 @@ import java.util.List;
  * @since 2025-08-18 11:03:25
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class GetPictrueListParam {
     /**
      * 图片名称
@@ -78,5 +81,11 @@ public class GetPictrueListParam {
     @Schema(description = "是否只查询spaceId为null的数据(是就查公共图库，不是就查对应的)", required = false)
     private Boolean nullSpace;
 
+    @Schema(description = "条数", required = true)
+    @NotNull("pageSize不能为空!")
+    private Integer pageSize;
+    @Schema(description = "页码", required = true)
+    @NotNull("pageNum不能为空!")
+    private Integer pageNum;
 }
 

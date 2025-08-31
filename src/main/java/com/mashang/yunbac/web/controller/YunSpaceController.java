@@ -1,4 +1,5 @@
 package com.mashang.yunbac.web.controller;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -26,6 +27,7 @@ import com.mashang.yunbac.web.exception.ThrowUtils;
 import com.mashang.yunbac.web.service.YunSpaceService;
 import com.mashang.yunbac.web.service.impl.YunPictureServiceImpl;
 import com.mashang.yunbac.web.service.impl.YunUserServiceImpl;
+import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,9 +75,9 @@ public class YunSpaceController {
     @Operation(summary = "查询空间列表-管理员")
     @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public RowsTUtil<YunSpace> list(@Validated PageInfoParam pageInfoParam, @Validated GetSpaceListParam getSpaceListParam) {
+    public RowsTUtil<YunSpace> list(@RequestBody @Validated GetSpaceListParam getSpaceListParam) {
         // 开启分页
-        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        PageHelper.startPage(getSpaceListParam.getPageNum(), getSpaceListParam.getPageSize());
         //后台列表根据多个条件查询
         QueryWrapper<YunSpace> yunUserVoQueryWrapper = new QueryWrapper<>();
         yunUserVoQueryWrapper.like(getSpaceListParam.getSpaceName() != null, "space_name", getSpaceListParam.getSpaceName());
@@ -92,7 +94,7 @@ public class YunSpaceController {
 
     @Operation(summary = "查询空间详情")
     @GetMapping("/detail")
-    public ResultTUtil<YunSpaceUserVo> detail(Long spaceId) {
+    public ResultTUtil<YunSpaceUserVo> detail(@RequestParam Long spaceId) {
         ThrowUtils.throwIf(spaceId == null, ErrorCode.NOT_FOUND_ERROR);
         YunSpace byId = yunSpaceService.getById(spaceId);
         ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
@@ -108,7 +110,7 @@ public class YunSpaceController {
 
     @Operation(summary = "查询所有空间类别")
     @GetMapping("/type")
-    public ResultTUtil<List<YunSpaceTypeVo>> type(Long spaceId) {
+    public ResultTUtil<List<YunSpaceTypeVo>> type() {
         List<YunSpaceTypeVo> yunSpaceTypeVos = SpaceEnum.convertToSpaceTypeVoList();
         return new ResultTUtil<List<YunSpaceTypeVo>>().success("查询成功", yunSpaceTypeVos);
     }
@@ -122,13 +124,16 @@ public class YunSpaceController {
         ThrowUtils.throwIf(!SpaceEnum.getValues().contains(updateSpaceParam.getSpaceLevel()), ErrorCode.NOT_FOUND_ERROR);
         YunSpace yunSpace = new YunSpace();
         BeanUtils.copyProperties(updateSpaceParam, yunSpace);
+        //设置对应类型空间大小
+        yunSpace.setMaxSize(SpaceEnum.getEnumByValue(Long.valueOf(updateSpaceParam.getSpaceLevel())).getMaxSize());
+        yunSpace.setMaxCount(SpaceEnum.getEnumByValue(Long.valueOf(updateSpaceParam.getSpaceLevel())).getMaxCount());
         boolean b = yunSpaceService.updateById(yunSpace);
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
         return new ResultTUtil<>().success("修改成功");
     }
 
     @Operation(summary = "删除空间")
-    @DeleteMapping("/del/{picId}")
+    @DeleteMapping("/del/{spaceId}")
     public ResultTUtil del(@PathVariable Long spaceId) {
         YunSpace byId = yunSpaceService.getById(spaceId);
         ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
@@ -136,9 +141,19 @@ public class YunSpaceController {
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR);
         //删除空间内的所有图片
         QueryWrapper<YunPicture> yunPictureQueryWrapper = new QueryWrapper<>();
-        yunPictureQueryWrapper.eq("space_id",  byId.getSpaceId());
+        yunPictureQueryWrapper.eq("space_id", byId.getSpaceId());
         yunPictureService.remove(yunPictureQueryWrapper);
         return new ResultTUtil<>().success("删除成功");
+    }
+
+    @Operation(summary = "查询当前用户所有空间")
+    @GetMapping("/all/space")
+    public ResultTUtil<List<YunSpace>> allSpace(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        Long userId = JWTUtil.getUserId(token);
+        QueryWrapper<YunSpace> queryWrapper = new QueryWrapper<YunSpace>().eq("user_id", userId);
+        List<YunSpace> list = yunSpaceService.list(queryWrapper);
+        return new ResultTUtil<List<YunSpace>>().success("查询成功", list);
     }
 
 

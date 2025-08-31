@@ -36,6 +36,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         String requestUri = request.getRequestURI();
         // 白名单路径（无需登录）
         if (requestUri.startsWith("/api/user/login")
+                || requestUri.startsWith("/api/user/info")
+                || requestUri.startsWith("/api/yunPicture/list/vo")
+                || requestUri.startsWith("/api/yunPicture/tags/all")
+                || requestUri.startsWith("/api/yunPicture/detail/vo")
                 || requestUri.startsWith("/api/user/register")
                 || requestUri.startsWith("/api/doc.html")
                 || requestUri.startsWith("/api/swagger-ui.html")

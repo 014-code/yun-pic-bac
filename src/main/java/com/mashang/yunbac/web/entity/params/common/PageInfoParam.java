@@ -1,5 +1,6 @@
 package com.mashang.yunbac.web.entity.params.common;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
@@ -10,11 +11,14 @@ import org.jetbrains.annotations.NotNull;
 @Data
 public class PageInfoParam {
 
-    @Schema(description = "条数", required = true)
-    @NotNull("pageSize不能为空!")
-    private Integer pageSize;
     @Schema(description = "页码", required = true)
     @NotNull("pageNum不能为空!")
+    @JsonProperty("pageNum")
     private Integer pageNum;
+    
+    @Schema(description = "条数", required = true)
+    @NotNull("pageSize不能为空!")
+    @JsonProperty("pageSize")
+    private Integer pageSize;
 
 }

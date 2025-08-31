@@ -78,7 +78,7 @@ public class YunUserController {
     @GetMapping("/info")
     public ResultTUtil<YunUserVo> info(HttpServletRequest request) {
         YunUserVo yunUserVo = new YunUserVo();
-        String token = (String) request.getAttribute("Authorization");
+        String token = (String) request.getHeader("Authorization");
         Long userId = JWTUtil.getUserId(token);
         YunUser yunUser = yunUserService.getById(userId);
         BeanUtils.copyProperties(yunUser, yunUserVo);
@@ -88,7 +88,7 @@ public class YunUserController {
     @Operation(summary = "注销用户")
     @PostMapping("/cancellation")
     public ResultTUtil cancellation(HttpServletRequest request) {
-        String token = (String) request.getAttribute("Authorization");
+        String token = (String) request.getHeader("Authorization");
         Long userId = JWTUtil.getUserId(token);
         if (userId != null && userId != 0L) {
             String redisKey = "login:token:" + userId;
@@ -100,9 +100,9 @@ public class YunUserController {
     @Operation(summary = "获取用户列表")
     @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public RowsTUtil<YunUserVo> listUser(@Validated GetUserListParam pageInfo, @Validated PageInfoParam param) {
+    public RowsTUtil<YunUserVo> listUser(@RequestBody @Validated GetUserListParam pageInfo) {
         // 开启分页
-        PageHelper.startPage(param.getPageNum(), param.getPageSize());
+        PageHelper.startPage(pageInfo.getPageNum(), pageInfo.getPageSize());
         //后台列表根据多个条件查询-todo 增加请求参数与qw条件过滤
         QueryWrapper<YunUser> yunUserVoQueryWrapper = new QueryWrapper<>();
         yunUserVoQueryWrapper.like(pageInfo.getAccount() != null, "account", pageInfo.getAccount());

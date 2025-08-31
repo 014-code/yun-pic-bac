@@ -33,6 +33,7 @@ import com.mashang.yunbac.web.service.YunPictureService;
 import com.mashang.yunbac.web.entity.domian.YunPicture;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -50,6 +51,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +65,7 @@ import java.util.regex.Pattern;
  * @since 2025-08-19 20:51:56
  */
 @Service("yunPictureService")
+@Slf4j
 public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPicture> implements YunPictureService {
 
     @Resource
@@ -111,7 +114,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         String format;
         if (spaceId == null) {
             format = "public/" + yunUser.getUserId();
-        }else {
+        } else {
             format = "space/" + spaceId;
         }
         UploadPictureResult uploadPictureResult = new UploadPictureResult();
@@ -123,6 +126,12 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
             //把从filemanger得到的图片信息入库-更新或者新增
             uploadPictureResult = fileManger.uploadPicture((String) file, format, false);
         }
+
+        // 添加日志，查看上传结果
+        log.info("上传图片结果: url={}, thumbnailUrl={}, picName={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", 
+                uploadPictureResult.getUrl(), uploadPictureResult.getThumbnailUrl(), uploadPictureResult.getPicName(),
+                uploadPictureResult.getPicSize(), uploadPictureResult.getPicWidth(), uploadPictureResult.getPicHeight(),
+                uploadPictureResult.getPicScale(), uploadPictureResult.getPicFormat());
 
         YunPicture yunPicture = new YunPicture();
         yunPicture.setUserId(yunUser.getUserId());
@@ -142,6 +151,12 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setUpdateTime(new Date());
         yunPicture.setUrl(uploadPictureResult.getUrl());
         yunPicture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
+        
+        // 添加日志，查看设置后的实体对象
+        log.info("设置后的YunPicture对象: url={}, thumbnailUrl={}, name={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", 
+                yunPicture.getUrl(), yunPicture.getThumbnailUrl(), yunPicture.getName(),
+                yunPicture.getPicSize(), yunPicture.getPicWidth(), yunPicture.getPicHeight(),
+                yunPicture.getPicScale(), yunPicture.getPicFormat());
         //校验是否超额
         quota(spaceId, yunUser.getUserId());
         yunPicture.setSpaceId(spaceId);
@@ -159,7 +174,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
                     throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "空间id不一致");
                 }
                 //校验上传的图片空间id是否和现在传入的一致，不一致则直接将当前的set为原先的
-            }else {
+            } else {
                 yunPicture.setSpaceId(spaceId);
             }
             yunPicture.setPicId(picId);
@@ -170,9 +185,28 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
             yunPictureMapper.insert(yunPicture);
             yunPicture.setPicId(yunPictureMapper.selectById(yunPicture.getPicId()).getPicId());
         }
+        
+        // 手动构建返回结果，避免BeanUtils.copyProperties的类型转换问题
         YunPictureVo yunPictureVo = new YunPictureVo();
-        BeanUtils.copyProperties(yunPicture, yunPictureVo);
         yunPictureVo.setPicId(yunPicture.getPicId());
+        yunPictureVo.setUrl(yunPicture.getUrl());
+        yunPictureVo.setName(yunPicture.getName());
+        yunPictureVo.setIntroduction(yunPicture.getIntroduction());
+        yunPictureVo.setCategory(yunPicture.getCategory());
+        yunPictureVo.setTags(yunPicture.getTags() != null ? Arrays.asList(yunPicture.getTags().split(",")) : null);
+        yunPictureVo.setPicSize(yunPicture.getPicSize());
+        yunPictureVo.setPicWidth(yunPicture.getPicWidth());
+        yunPictureVo.setPicHeight(yunPicture.getPicHeight());
+        yunPictureVo.setPicScale(yunPicture.getPicScale() != null ? yunPicture.getPicScale().toString() : null);
+        yunPictureVo.setPicFormat(yunPicture.getPicFormat());
+        yunPictureVo.setStatus(yunPicture.getStatus());
+        yunPictureVo.setThumbnailUrl(yunPicture.getThumbnailUrl());
+        yunPictureVo.setReason(yunPicture.getReason());
+        yunPictureVo.setUserId(yunPicture.getUserId());
+        yunPictureVo.setReviewId(yunPicture.getReviewId());
+        yunPictureVo.setCreateTime(yunPicture.getCreateTime());
+        yunPictureVo.setUpdateTime(yunPicture.getUpdateTime());
+        
         return new ResultTUtil<YunPictureVo>().success("查询成功", yunPictureVo);
     }
 
@@ -182,16 +216,16 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
     private void updateQuota(Long yunSpaceId, Long userId, YunPicture yunPicture) {
         //开启事务
         transactionTemplate.execute(status -> {
-            if (yunSpaceId != null) {
-                boolean update = yunSpaceService.lambdaUpdate()
-                        .eq(YunSpace::getSpaceId, yunSpaceId)
-                        .setSql("total_size = total_size + " + yunPicture.getPicSize())
-                        .setSql("total_count = total_count + 1")
-                        .update();
-                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
-            }
-            return null;
-        }
+                    if (yunSpaceId != null) {
+                        boolean update = yunSpaceService.lambdaUpdate()
+                                .eq(YunSpace::getSpaceId, yunSpaceId)
+                                .setSql("total_size = total_size + " + yunPicture.getPicSize())
+                                .setSql("total_count = total_count + 1")
+                                .update();
+                        ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+                    }
+                    return null;
+                }
         );
     }
 
@@ -302,11 +336,15 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
     }
 
     @Override
-    public RowsTUtil<YunPictureVo> listVo(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam) {
+    public RowsTUtil<YunPictureVo> listVo(Integer pageNum, Integer pageSize, GetPictrueListParam getPictrueListParam) {
+        //组装分页对象
+        PageInfoParam pageInfoParam = new PageInfoParam(pageNum, pageSize);
         //构造redis的key
         String queryCondition = JSONUtil.toJsonStr(getPictrueListParam);
         String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
         String redisKey = "yunpic:listVo:" + hashKey;
+        List<YunPictureVo> yunPictureVo = selectList(pageInfoParam, getPictrueListParam);
+        PageInfo<YunPicture> pageLis = getPage(pageInfoParam, getPictrueListParam);
         //1.先查询本地缓存
         String ifPresent = LOCAL_CACHE.getIfPresent(redisKey);
         if (ifPresent != null) {
@@ -375,19 +413,89 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
      * @param getPictrueListParam
      */
     private List<YunPicture> getList(PageInfoParam pageInfoParam, GetPictrueListParam getPictrueListParam) {
-        // 开启分页
-        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        // 先做基础查询，看看数据库中有多少图片
+        QueryWrapper<YunPicture> baseQuery = new QueryWrapper<>();
+        Long totalPictures = yunPictureMapper.selectCount(baseQuery);
+        log.info("数据库中总图片数量: {}", totalPictures);
+        
+        // 检查status=1的图片数量
+        QueryWrapper<YunPicture> statusQuery = new QueryWrapper<>();
+        statusQuery.eq("status", "1");
+        Long status1Count = yunPictureMapper.selectCount(statusQuery);
+        log.info("status=1的图片数量: {}", status1Count);
+        
+        // 检查space_id为null的图片数量
+        QueryWrapper<YunPicture> spaceQuery = new QueryWrapper<>();
+        spaceQuery.isNull("space_id");
+        Long nullSpaceCount = yunPictureMapper.selectCount(spaceQuery);
+        log.info("space_id为null的图片数量: {}", nullSpaceCount);
+        
+        // 检查status=1且space_id为null的图片数量
+        QueryWrapper<YunPicture> combinedQuery = new QueryWrapper<>();
+        combinedQuery.eq("status", "1").isNull("space_id");
+        Long combinedCount = yunPictureMapper.selectCount(combinedQuery);
+        log.info("status=1且space_id为null的图片数量: {}", combinedCount);
+        
         //后台列表根据多个条件查询
         QueryWrapper<YunPicture> yunUserVoQueryWrapper = new QueryWrapper<>();
-        yunUserVoQueryWrapper.like(getPictrueListParam.getCategory() != null, "category", getPictrueListParam.getCategory());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getName() != null, "name", getPictrueListParam.getName());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getTags() != null, "tags", getPictrueListParam.getTags());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getIntroduction() != null, "introduction", getPictrueListParam.getIntroduction());
-        yunUserVoQueryWrapper.like(getPictrueListParam.getPicFormat() != null, "pic_format", getPictrueListParam.getPicFormat());
-        yunUserVoQueryWrapper.eq(ObjectUtil.isNotEmpty(getPictrueListParam.getSpaceId()), "space_id", getPictrueListParam.getSpaceId());
-        yunUserVoQueryWrapper.isNull(getPictrueListParam.getNullSpace(),  "space_id");
+        
+        // 只有当参数不为空且不为空字符串时才添加like条件
+        if (StrUtil.isNotBlank(getPictrueListParam.getCategory())) {
+            yunUserVoQueryWrapper.like("category", getPictrueListParam.getCategory());
+        }
+        if (StrUtil.isNotBlank(getPictrueListParam.getName())) {
+            yunUserVoQueryWrapper.like("name", getPictrueListParam.getName());
+        }
+        if (getPictrueListParam.getTags() != null && !getPictrueListParam.getTags().isEmpty()) {
+            yunUserVoQueryWrapper.like("tags", getPictrueListParam.getTags());
+        }
+        if (StrUtil.isNotBlank(getPictrueListParam.getIntroduction())) {
+            yunUserVoQueryWrapper.like("introduction", getPictrueListParam.getIntroduction());
+        }
+        if (StrUtil.isNotBlank(getPictrueListParam.getPicFormat())) {
+            yunUserVoQueryWrapper.like("pic_format", getPictrueListParam.getPicFormat());
+        }
+        if (ObjectUtil.isNotEmpty(getPictrueListParam.getSpaceId())) {
+            yunUserVoQueryWrapper.eq("space_id", getPictrueListParam.getSpaceId());
+        }
+        
+        // 调试日志：打印查询条件
+        log.info("查询参数: spaceId={}, category={}, name={}, status=1", 
+                getPictrueListParam.getSpaceId(), 
+                getPictrueListParam.getCategory(), 
+                getPictrueListParam.getName());
+        
+        if (getPictrueListParam.getSpaceId() == null) {
+            //不传则查询空间id为空的-公共图库
+            yunUserVoQueryWrapper.isNull("space_id");
+            log.info("添加查询条件: space_id IS NULL (公共图库)");
+        } else {
+            log.info("添加查询条件: space_id = {}", getPictrueListParam.getSpaceId());
+        }
+        
         yunUserVoQueryWrapper.eq("status", "1");
+        
+        // 先查询总数，看看是否有数据
+        Long totalCount = yunPictureMapper.selectCount(yunUserVoQueryWrapper);
+        log.info("最终查询条件总数: {}", totalCount);
+        
+        // 打印最终的SQL查询条件
+        log.info("最终查询条件: {}", yunUserVoQueryWrapper.getTargetSql());
+        
+        // 开启分页 - 必须在最终查询前调用
+        log.info("分页参数: pageNum={}, pageSize={}", pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        
         List<YunPicture> list = yunPictureMapper.selectList(yunUserVoQueryWrapper);
+        log.info("查询结果数量: {}", list.size());
+        
+        // 检查分页信息
+        if (list.size() > 0) {
+            log.info("第一条记录ID: {}, 最后一条记录ID: {}", 
+                    list.get(0).getPicId(), 
+                    list.get(list.size() - 1).getPicId());
+        }
+        
         return list;
     }
 

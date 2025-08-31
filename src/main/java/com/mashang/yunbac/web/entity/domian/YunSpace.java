@@ -33,7 +33,7 @@ public class YunSpace {
     private String spaceName;
     //空间级别()0普通1专业2旗舰)
     private String spaceLevel;
-    //最大总大小s
+    //最大总大小
     private BigDecimal maxSize;
     //空间图片最大总数量
     private Long maxCount;

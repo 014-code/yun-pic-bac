@@ -132,9 +132,9 @@ public class YunPictureController {
     @Operation(summary = "分页查询图片列表-管理员")
     @PostMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public RowsTUtil<YunPicture> list(@Validated PageInfoParam pageInfoParam, @Validated GetPictrueListParam getPictrueListParam) {
+    public RowsTUtil<YunPicture> list(@RequestBody @Validated GetPictrueListParam getPictrueListParam) {
         // 开启分页
-        PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
+        PageHelper.startPage(getPictrueListParam.getPageNum(), getPictrueListParam.getPageSize());
         //后台列表根据多个条件查询
         QueryWrapper<YunPicture> yunUserVoQueryWrapper = new QueryWrapper<>();
         yunUserVoQueryWrapper.like(getPictrueListParam.getCategory() != null, "category", getPictrueListParam.getCategory());
@@ -191,7 +191,7 @@ public class YunPictureController {
             if (!byId.getUserId().equals(userId) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限修改该图片");
             }
-        }else {
+        } else {
             YunSpace yunSpace = yunSpaceService.getById(byId.getSpaceId());
             if (!yunSpace.getUserId().equals(userId)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无修改删除该图片");
@@ -222,7 +222,7 @@ public class YunPictureController {
             if (!byId.getUserId().equals(userId) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除该图片");
             }
-        }else {
+        } else {
             YunSpace yunSpace = yunSpaceService.getById(byId.getSpaceId());
             if (!yunSpace.getUserId().equals(userId)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除该图片");
@@ -237,8 +237,8 @@ public class YunPictureController {
     @Operation(summary = "分页获取图片")
     @PostMapping("/list/vo")
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
-    public RowsTUtil<YunPictureVo> listVo(@Validated PageInfoParam pageInfoParam, @Validated GetPictrueListParam getPictrueListParam) {
-        return yunPictureService.listVo(pageInfoParam, getPictrueListParam);
+    public RowsTUtil<YunPictureVo> listVo(@Validated @RequestBody GetPictrueListParam getPictrueListParam) {
+        return yunPictureService.listVo(getPictrueListParam.getPageNum(), getPictrueListParam.getPageSize(), getPictrueListParam);
     }
 
     @Operation(summary = "查询图片详情")
@@ -256,10 +256,12 @@ public class YunPictureController {
         //校验图片是否为公共图库，是的话只有上传人和管理员可以，是私有空间的话只能空间管理者才行
         if (byId.getSpaceId() == null) {
             //公共图库
-            if (!byId.getUserId().equals(userId) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权查看该图片");
+            if (byId.getUserId() != null) {
+                if (!byId.getUserId().equals(userId) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
+                    throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权查看该图片");
+                }
             }
-        }else {
+        } else {
             YunSpace yunSpace = yunSpaceService.getById(byId.getSpaceId());
             if (!yunSpace.getUserId().equals(userId)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权查看该图片");
@@ -348,17 +350,12 @@ public class YunPictureController {
     private void updateQuota(Long yunSpaceId, Long userId, YunPicture yunPicture) {
         //开启事务
         transactionTemplate.execute(status -> {
-                    if (yunSpaceId != null) {
-                        boolean update = yunSpaceService.lambdaUpdate()
-                                .eq(YunSpace::getSpaceId, yunSpaceId)
-                                .setSql("total_size = total_size - " + yunPicture.getPicSize())
-                                .setSql("total_count = total_count - 1")
-                                .update();
-                        ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
-                    }
-                    return null;
-                }
-        );
+            if (yunSpaceId != null) {
+                boolean update = yunSpaceService.lambdaUpdate().eq(YunSpace::getSpaceId, yunSpaceId).setSql("total_size = total_size - " + yunPicture.getPicSize()).setSql("total_count = total_count - 1").update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+            }
+            return null;
+        });
     }
 
 }
