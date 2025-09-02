@@ -128,10 +128,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         }
 
         // 添加日志，查看上传结果
-        log.info("上传图片结果: url={}, thumbnailUrl={}, picName={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", 
-                uploadPictureResult.getUrl(), uploadPictureResult.getThumbnailUrl(), uploadPictureResult.getPicName(),
-                uploadPictureResult.getPicSize(), uploadPictureResult.getPicWidth(), uploadPictureResult.getPicHeight(),
-                uploadPictureResult.getPicScale(), uploadPictureResult.getPicFormat());
+        log.info("上传图片结果: url={}, thumbnailUrl={}, picName={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", uploadPictureResult.getUrl(), uploadPictureResult.getThumbnailUrl(), uploadPictureResult.getPicName(), uploadPictureResult.getPicSize(), uploadPictureResult.getPicWidth(), uploadPictureResult.getPicHeight(), uploadPictureResult.getPicScale(), uploadPictureResult.getPicFormat());
 
         YunPicture yunPicture = new YunPicture();
         yunPicture.setUserId(yunUser.getUserId());
@@ -151,12 +148,9 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setUpdateTime(new Date());
         yunPicture.setUrl(uploadPictureResult.getUrl());
         yunPicture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
-        
+
         // 添加日志，查看设置后的实体对象
-        log.info("设置后的YunPicture对象: url={}, thumbnailUrl={}, name={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", 
-                yunPicture.getUrl(), yunPicture.getThumbnailUrl(), yunPicture.getName(),
-                yunPicture.getPicSize(), yunPicture.getPicWidth(), yunPicture.getPicHeight(),
-                yunPicture.getPicScale(), yunPicture.getPicFormat());
+        log.info("设置后的YunPicture对象: url={}, thumbnailUrl={}, name={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", yunPicture.getUrl(), yunPicture.getThumbnailUrl(), yunPicture.getName(), yunPicture.getPicSize(), yunPicture.getPicWidth(), yunPicture.getPicHeight(), yunPicture.getPicScale(), yunPicture.getPicFormat());
         //校验是否超额
         quota(spaceId, yunUser.getUserId());
         yunPicture.setSpaceId(spaceId);
@@ -185,7 +179,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
             yunPictureMapper.insert(yunPicture);
             yunPicture.setPicId(yunPictureMapper.selectById(yunPicture.getPicId()).getPicId());
         }
-        
+
         // 手动构建返回结果，避免BeanUtils.copyProperties的类型转换问题
         YunPictureVo yunPictureVo = new YunPictureVo();
         yunPictureVo.setPicId(yunPicture.getPicId());
@@ -206,7 +200,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPictureVo.setReviewId(yunPicture.getReviewId());
         yunPictureVo.setCreateTime(yunPicture.getCreateTime());
         yunPictureVo.setUpdateTime(yunPicture.getUpdateTime());
-        
+
         return new ResultTUtil<YunPictureVo>().success("查询成功", yunPictureVo);
     }
 
@@ -216,17 +210,12 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
     private void updateQuota(Long yunSpaceId, Long userId, YunPicture yunPicture) {
         //开启事务
         transactionTemplate.execute(status -> {
-                    if (yunSpaceId != null) {
-                        boolean update = yunSpaceService.lambdaUpdate()
-                                .eq(YunSpace::getSpaceId, yunSpaceId)
-                                .setSql("total_size = total_size + " + yunPicture.getPicSize())
-                                .setSql("total_count = total_count + 1")
-                                .update();
-                        ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
-                    }
-                    return null;
-                }
-        );
+            if (yunSpaceId != null) {
+                boolean update = yunSpaceService.lambdaUpdate().eq(YunSpace::getSpaceId, yunSpaceId).setSql("total_size = total_size + " + yunPicture.getPicSize()).setSql("total_count = total_count + 1").update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "额度更新失败");
+            }
+            return null;
+        });
     }
 
     /**
@@ -417,28 +406,28 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         QueryWrapper<YunPicture> baseQuery = new QueryWrapper<>();
         Long totalPictures = yunPictureMapper.selectCount(baseQuery);
         log.info("数据库中总图片数量: {}", totalPictures);
-        
+
         // 检查status=1的图片数量
         QueryWrapper<YunPicture> statusQuery = new QueryWrapper<>();
         statusQuery.eq("status", "1");
         Long status1Count = yunPictureMapper.selectCount(statusQuery);
         log.info("status=1的图片数量: {}", status1Count);
-        
+
         // 检查space_id为null的图片数量
         QueryWrapper<YunPicture> spaceQuery = new QueryWrapper<>();
         spaceQuery.isNull("space_id");
         Long nullSpaceCount = yunPictureMapper.selectCount(spaceQuery);
         log.info("space_id为null的图片数量: {}", nullSpaceCount);
-        
+
         // 检查status=1且space_id为null的图片数量
         QueryWrapper<YunPicture> combinedQuery = new QueryWrapper<>();
         combinedQuery.eq("status", "1").isNull("space_id");
         Long combinedCount = yunPictureMapper.selectCount(combinedQuery);
         log.info("status=1且space_id为null的图片数量: {}", combinedCount);
-        
+
         //后台列表根据多个条件查询
         QueryWrapper<YunPicture> yunUserVoQueryWrapper = new QueryWrapper<>();
-        
+
         // 只有当参数不为空且不为空字符串时才添加like条件
         if (StrUtil.isNotBlank(getPictrueListParam.getCategory())) {
             yunUserVoQueryWrapper.like("category", getPictrueListParam.getCategory());
@@ -458,13 +447,13 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         if (ObjectUtil.isNotEmpty(getPictrueListParam.getSpaceId())) {
             yunUserVoQueryWrapper.eq("space_id", getPictrueListParam.getSpaceId());
         }
-        
+        //时间范围查询
+        yunUserVoQueryWrapper.ge(getPictrueListParam.getStartEditTime() != null, "update_time", getPictrueListParam.getStartEditTime());
+        yunUserVoQueryWrapper.lt(getPictrueListParam.getEndEditTime() != null, "update_time", getPictrueListParam.getEndEditTime());
+
         // 调试日志：打印查询条件
-        log.info("查询参数: spaceId={}, category={}, name={}, status=1", 
-                getPictrueListParam.getSpaceId(), 
-                getPictrueListParam.getCategory(), 
-                getPictrueListParam.getName());
-        
+        log.info("查询参数: spaceId={}, category={}, name={}, status=1", getPictrueListParam.getSpaceId(), getPictrueListParam.getCategory(), getPictrueListParam.getName());
+
         if (getPictrueListParam.getSpaceId() == null) {
             //不传则查询空间id为空的-公共图库
             yunUserVoQueryWrapper.isNull("space_id");
@@ -472,30 +461,28 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         } else {
             log.info("添加查询条件: space_id = {}", getPictrueListParam.getSpaceId());
         }
-        
+
         yunUserVoQueryWrapper.eq("status", "1");
-        
+
         // 先查询总数，看看是否有数据
         Long totalCount = yunPictureMapper.selectCount(yunUserVoQueryWrapper);
         log.info("最终查询条件总数: {}", totalCount);
-        
+
         // 打印最终的SQL查询条件
         log.info("最终查询条件: {}", yunUserVoQueryWrapper.getTargetSql());
-        
+
         // 开启分页 - 必须在最终查询前调用
         log.info("分页参数: pageNum={}, pageSize={}", pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
         PageHelper.startPage(pageInfoParam.getPageNum(), pageInfoParam.getPageSize());
-        
+
         List<YunPicture> list = yunPictureMapper.selectList(yunUserVoQueryWrapper);
         log.info("查询结果数量: {}", list.size());
-        
+
         // 检查分页信息
         if (list.size() > 0) {
-            log.info("第一条记录ID: {}, 最后一条记录ID: {}", 
-                    list.get(0).getPicId(), 
-                    list.get(list.size() - 1).getPicId());
+            log.info("第一条记录ID: {}, 最后一条记录ID: {}", list.get(0).getPicId(), list.get(list.size() - 1).getPicId());
         }
-        
+
         return list;
     }
 

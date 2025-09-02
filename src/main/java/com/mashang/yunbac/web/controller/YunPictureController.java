@@ -1,19 +1,20 @@
 package com.mashang.yunbac.web.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.mashang.yunbac.web.annotation.AuthCheck;
+import com.mashang.yunbac.web.api.imagesearch.SoImageSearchApiFacade;
+import com.mashang.yunbac.web.api.imagesearch.vo.ImageSearchVo;
 import com.mashang.yunbac.web.constant.UserConstant;
 import com.mashang.yunbac.web.entity.domian.YunPicture;
 import com.mashang.yunbac.web.entity.domian.YunSpace;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.PicStatusEnum;
-import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
 import com.mashang.yunbac.web.entity.params.picture.CaptureParam;
 import com.mashang.yunbac.web.entity.params.picture.GetPictrueListParam;
 import com.mashang.yunbac.web.entity.params.picture.ReviewPicParam;
@@ -342,6 +343,27 @@ public class YunPictureController {
         //防爬虫-最多50条
         ThrowUtils.throwIf(captureParam.getNum() > 50, ErrorCode.NOT_FOUND_ERROR, "最大数量不能超过50条");
         return yunPictureService.capture(captureParam, captureParam.getYunUser());
+    }
+
+    @Operation(summary = "以图搜图")
+    @GetMapping("/search")
+    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil<List<ImageSearchVo>> search(Long picId) {
+        ThrowUtils.throwIf(picId == null, ErrorCode.NOT_FOUND_ERROR);
+        YunPicture byId = yunPictureService.getById(picId);
+        ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
+        List<ImageSearchVo> resultList = new ArrayList<>();
+        // 这个 start 是控制查询多少页, 每页是 20 条
+        int start = 0;
+        while (resultList.size() <= 50) {
+            List<ImageSearchVo> tempList = SoImageSearchApiFacade.searchImage(byId.getUrl(), start);
+            if (tempList.isEmpty()) {
+                break;
+            }
+            resultList.addAll(tempList);
+            start += tempList.size();
+        }
+        return new ResultTUtil<List<ImageSearchVo>>().success("查询成功", resultList);
     }
 
     /**

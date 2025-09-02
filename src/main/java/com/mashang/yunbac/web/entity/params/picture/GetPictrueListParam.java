@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -80,6 +81,16 @@ public class GetPictrueListParam {
      */
     @Schema(description = "是否只查询spaceId为null的数据(是就查公共图库，不是就查对应的)", required = false)
     private Boolean nullSpace;
+    /**
+     * 编辑开始时间
+     */
+    @Schema(description = "编辑开始时间", required = false)
+    private Date startEditTime;
+    /**
+     * 编辑结束时间
+     */
+    @Schema(description = "编辑结束时间", required = false)
+    private Date endEditTime;
 
     @Schema(description = "条数", required = true)
     @NotNull("pageSize不能为空!")
