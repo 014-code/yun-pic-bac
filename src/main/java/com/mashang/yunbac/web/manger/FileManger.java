@@ -109,6 +109,7 @@ public class FileManger {
             result.setPicFormat(imageInfo.getFormat());
             result.setPicSize(FileUtil.size(tempFile));
             result.setUrl(cosConfig.getHost() + "/" + uploadPath);
+            result.setPicColor(imageInfo.getAve());
             return result;
 
         } catch (Exception e) {
@@ -177,7 +178,7 @@ public class FileManger {
             result.setPicFormat(imageInfo.getFormat());
             result.setPicSize(FileUtil.size(tempFile));
             result.setUrl(cosConfig.getHost() + "/" + uploadPath);
-
+            result.setPicColor(imageInfo.getAve());
             return result;
 
         } catch (Exception e) {

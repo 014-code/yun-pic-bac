@@ -100,6 +100,11 @@ public class YunPictureVo {
     @Schema(description = "审核人id")
     private Long reviewId;
     /**
+     * 图片主色调
+     */
+    @Schema(description = "图片主色调")
+    private String picColor;
+    /**
      * 创建时间
      */
     @Schema(description = "创建时间")

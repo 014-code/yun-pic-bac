@@ -3,6 +3,7 @@ package com.mashang.yunbac.web.entity.vo.picture;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -71,6 +72,11 @@ public class YunPictureVos {
      * 创建用户
      */
     private Long userId;
+    /**
+     * 图片主色调
+     */
+    @Schema(description = "图片主色调")
+    private String picColor;
     /**
      * 创建时间
      */

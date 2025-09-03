@@ -366,6 +366,13 @@ public class YunPictureController {
         return new ResultTUtil<List<ImageSearchVo>>().success("查询成功", resultList);
     }
 
+    @Operation(summary = "颜色搜图")
+    @GetMapping("/search/color")
+    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil<List<YunPictureVo>> searchByColor(Long spaceId, String color, HttpServletRequest request) {
+        return yunPictureService.searchByColor(spaceId, color, request);
+    }
+
     /**
      * 更新额度方法
      */

@@ -59,4 +59,10 @@ public class UploadPictureResult {
     @Schema(description = "缩略图地址")
     private String thumbnailUrl;
 
+    /**
+     * 图片主色调
+     */
+    @Schema(description = "图片主色调")
+    private String picColor;
+
 }

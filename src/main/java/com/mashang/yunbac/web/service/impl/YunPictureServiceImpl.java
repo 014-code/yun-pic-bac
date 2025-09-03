@@ -6,6 +6,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -31,9 +32,11 @@ import com.mashang.yunbac.web.mapper.YunPictureMapper;
 import com.mashang.yunbac.web.mapper.YunSpaceMapper;
 import com.mashang.yunbac.web.service.YunPictureService;
 import com.mashang.yunbac.web.entity.domian.YunPicture;
+import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -45,18 +48,20 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * (YunPicture)表服务实现类
@@ -148,6 +153,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setUpdateTime(new Date());
         yunPicture.setUrl(uploadPictureResult.getUrl());
         yunPicture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
+        uploadPictureResult.setPicColor(uploadPictureResult.getPicColor());
 
         // 添加日志，查看设置后的实体对象
         log.info("设置后的YunPicture对象: url={}, thumbnailUrl={}, name={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", yunPicture.getUrl(), yunPicture.getThumbnailUrl(), yunPicture.getName(), yunPicture.getPicSize(), yunPicture.getPicWidth(), yunPicture.getPicHeight(), yunPicture.getPicScale(), yunPicture.getPicFormat());
@@ -561,5 +567,81 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         if (StrUtil.isNotBlank(thumbnailUrl)) {
             cosManger.delObj(yunPicture.getThumbnailUrl());
         }
+    }
+
+    @Override
+    public ResultTUtil<List<YunPictureVo>> searchByColor(Long spaceId, String color, HttpServletRequest request) {
+        // 从头部获取我们的token
+        String token = request.getHeader("Authorization");
+        Long userId = JWTUtil.getUserId(token);
+        // 1.校验参数
+        ThrowUtils.throwIf(spaceId == null || StringUtils.isBlank(color), ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(userId == null, ErrorCode.NO_AUTH_ERROR);
+
+        // 2.校验空间权限
+        YunSpace space = yunSpaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+        if (!userId.equals(space.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间访问权限");
+        }
+
+        // 3.查询该空间下所有图片(必须有主色调)
+        LambdaQueryWrapper<YunPicture> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(YunPicture::getSpaceId, spaceId).isNotNull(YunPicture::getPicColor);
+        List<YunPicture> pictureList = yunPictureMapper.selectList(queryWrapper);
+
+        // 如果没有图片，直接返回空列表
+        if (CollectionUtils.isEmpty(pictureList)) {
+            return new ResultTUtil<List<YunPictureVo>>().success("查询成功", Collections.emptyList());
+        }
+
+        // 将目标颜色转为Color对象
+        Color targetColor = Color.decode(color);
+
+        // 4.计算相似度并排序
+        List<YunPicture> sortedPictures = pictureList.stream().sorted(Comparator.comparingDouble(picture -> {
+            // 提取图片主色调
+            String hexColor = picture.getPicColor();
+            // 没有主色调的图片放到最后
+            if (StringUtils.isEmpty(hexColor)) {
+                return Double.MAX_VALUE;
+            }
+            try {
+                Color pictureColor = Color.decode(hexColor);
+                return calculateColorDistance(targetColor, pictureColor);
+            } catch (Exception e) {
+                return Double.MAX_VALUE;
+            }
+        })).collect(Collectors.toList());
+
+        // 取前12个并转换为PictureVO
+        List<YunPictureVo> collect = sortedPictures.stream().limit(12).map(this::convertToPictureVO).collect(Collectors.toList());
+        return new ResultTUtil<List<YunPictureVo>>().success("查询成功", collect);
+    }
+
+    /**
+     * 计算颜色距离（欧氏距离）
+     */
+    private double calculateColorDistance(Color color1, Color color2) {
+        int rDiff = color1.getRed() - color2.getRed();
+        int gDiff = color1.getGreen() - color2.getGreen();
+        int bDiff = color1.getBlue() - color2.getBlue();
+        return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+    }
+
+    /**
+     * 转换为VO对象
+     */
+    private YunPictureVo convertToPictureVO(YunPicture picture) {
+        YunPictureVo vo = new YunPictureVo();
+        vo.setPicId(picture.getPicId());
+        vo.setName(picture.getName());
+        vo.setUrl(picture.getUrl());
+        vo.setThumbnailUrl(picture.getThumbnailUrl());
+        vo.setCategory(picture.getCategory());
+        List<String> list = Arrays.asList(picture.getTags());
+        vo.setTags(list);
+        vo.setPicColor(picture.getPicColor());
+        return vo;
     }
 }

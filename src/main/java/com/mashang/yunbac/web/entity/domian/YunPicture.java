@@ -84,6 +84,10 @@ public class YunPicture {
      */
     private Long userId;
     /**
+     * 图片主色调
+     */
+    private String picColor;
+    /**
      * 缩略图url
      */
     private String thumbnailUrl;

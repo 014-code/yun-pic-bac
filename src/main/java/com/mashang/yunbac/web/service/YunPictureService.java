@@ -12,6 +12,9 @@ import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+
 /**
  * (YunPicture)表服务接口
  *
@@ -28,4 +31,6 @@ public interface YunPictureService extends IService<YunPicture> {
     RowsTUtil<YunPictureVo> listVo(Integer pageNum, Integer pageSize, GetPictrueListParam getPictrueListParam);
 
     void clearPicFile(YunPicture yunPicture);
+
+    ResultTUtil<List<YunPictureVo>> searchByColor(Long spaceId, String color, HttpServletRequest request);
 }
