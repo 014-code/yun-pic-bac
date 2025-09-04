@@ -16,6 +16,7 @@ import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.PicStatusEnum;
 import com.mashang.yunbac.web.entity.enums.SpaceEnum;
 import com.mashang.yunbac.web.entity.params.common.PageInfoParam;
+import com.mashang.yunbac.web.entity.params.picture.BatchPicParam;
 import com.mashang.yunbac.web.entity.params.picture.UpdatePictrueParam;
 import com.mashang.yunbac.web.entity.params.space.AddSpaceParam;
 import com.mashang.yunbac.web.entity.params.space.GetSpaceListParam;
@@ -154,6 +155,13 @@ public class YunSpaceController {
         QueryWrapper<YunSpace> queryWrapper = new QueryWrapper<YunSpace>().eq("user_id", userId);
         List<YunSpace> list = yunSpaceService.list(queryWrapper);
         return new ResultTUtil<List<YunSpace>>().success("查询成功", list);
+    }
+
+    @Operation(summary = "图片批量管理")
+    @PutMapping("/batch")
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public ResultTUtil batch(@RequestBody @Validated BatchPicParam batchPicParam, HttpServletRequest request) {
+        return yunSpaceService.batch(batchPicParam, request);
     }
 
 

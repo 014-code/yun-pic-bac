@@ -4,16 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="以图搜图模块完成">
+    <list default="true" id="1a26e9cf-9de8-421d-a3d6-3c3e8cb4de36" name="更改" comment="颜色搜索模块完成">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunPictureController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/domian/YunPicture.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/UploadPictureResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/UploadPictureResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVos.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/entity/vo/picture/YunPictureVos.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/FileManger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/manger/FileManger.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunPictureService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunPictureServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunSpaceController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/controller/YunSpaceController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunSpaceService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/YunSpaceService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunSpaceServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mashang/yunbac/web/service/impl/YunSpaceServiceImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -215,7 +210,8 @@
       <workItem from="1756639521444" duration="823000" />
       <workItem from="1756727309187" duration="4958000" />
       <workItem from="1756789218985" duration="8129000" />
-      <workItem from="1756882297536" duration="3249000" />
+      <workItem from="1756882297536" duration="3489000" />
+      <workItem from="1756961329232" duration="6722000" />
     </task>
     <task id="LOCAL-00001" summary="后端项目初始化">
       <option name="closed" value="true" />
@@ -337,7 +333,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756797434057</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="颜色搜索模块完成">
+      <option name="closed" value="true" />
+      <created>1756885975371</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1756885975371</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -367,6 +371,7 @@
     <MESSAGE value="完成空间模块初版" />
     <MESSAGE value="空间模块功能完成" />
     <MESSAGE value="以图搜图模块完成" />
-    <option name="LAST_COMMIT_MESSAGE" value="以图搜图模块完成" />
+    <MESSAGE value="颜色搜索模块完成" />
+    <option name="LAST_COMMIT_MESSAGE" value="颜色搜索模块完成" />
   </component>
 </project>

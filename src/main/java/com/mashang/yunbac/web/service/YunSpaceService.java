@@ -2,6 +2,7 @@ package com.mashang.yunbac.web.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.mashang.yunbac.web.entity.domian.YunSpace;
+import com.mashang.yunbac.web.entity.params.picture.BatchPicParam;
 import com.mashang.yunbac.web.entity.params.space.AddSpaceParam;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 
@@ -16,5 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 public interface YunSpaceService extends IService<YunSpace> {
 
     ResultTUtil addSpace(AddSpaceParam param, HttpServletRequest request);
+
+    ResultTUtil batch(BatchPicParam batchPicParam, HttpServletRequest request);
 }
 
