@@ -103,10 +103,16 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
      */
     @Override
     public ResultTUtil<YunPictureVo> uploadPic(Object file, Long picId, YunUser yunUser, String picName, Long spaceId) {
+        log.info("=== Service开始上传图片 ===");
+        log.info("开始上传图片，file类型: {}, picId: {}, userId: {}, picName: {}, spaceId: {}", 
+            file != null ? file.getClass().getSimpleName() : "null", picId, yunUser != null ? yunUser.getUserId() : "null", picName, spaceId);
+        
         //判断传入的用户信息是否有登录，没则直接抛异常
         ThrowUtils.throwIf(yunUser == null, ErrorCode.NOT_LOGIN_ERROR);
         //校验空间是否存在
         spaceExit(spaceId, yunUser.getUserId());
+        log.info("空间校验通过");
+        
         //判断是新增图片还是更新图片-有id就是更新,如果是更新则需要校验图片是否存在，不存在也要抛异常
         if (picId != null) {
             //库表查是否存在
@@ -125,11 +131,15 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         UploadPictureResult uploadPictureResult = new UploadPictureResult();
         //区分上传的是文件类型还是url
         if (file instanceof MultipartFile) {
+            log.info("开始调用FileManger.uploadPicture处理MultipartFile");
             //把从filemanger得到的图片信息入库-更新或者新增
             uploadPictureResult = fileManger.uploadPicture((MultipartFile) file, format);
+            log.info("FileManger.uploadPicture处理MultipartFile完成");
         } else if (file instanceof String) {
+            log.info("开始调用FileManger.uploadPicture处理URL");
             //把从filemanger得到的图片信息入库-更新或者新增
             uploadPictureResult = fileManger.uploadPicture((String) file, format, false);
+            log.info("FileManger.uploadPicture处理URL完成");
         }
 
         // 添加日志，查看上传结果
@@ -153,7 +163,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
         yunPicture.setUpdateTime(new Date());
         yunPicture.setUrl(uploadPictureResult.getUrl());
         yunPicture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
-        uploadPictureResult.setPicColor(uploadPictureResult.getPicColor());
+        yunPicture.setPicColor(uploadPictureResult.getPicColor());
 
         // 添加日志，查看设置后的实体对象
         log.info("设置后的YunPicture对象: url={}, thumbnailUrl={}, name={}, picSize={}, picWidth={}, picHeight={}, picScale={}, picFormat={}", yunPicture.getUrl(), yunPicture.getThumbnailUrl(), yunPicture.getName(), yunPicture.getPicSize(), yunPicture.getPicWidth(), yunPicture.getPicHeight(), yunPicture.getPicScale(), yunPicture.getPicFormat());
@@ -183,7 +193,7 @@ public class YunPictureServiceImpl extends ServiceImpl<YunPictureMapper, YunPict
             updateQuota(spaceId, yunUser.getUserId(), yunPicture);
         } else {
             yunPictureMapper.insert(yunPicture);
-            yunPicture.setPicId(yunPictureMapper.selectById(yunPicture.getPicId()).getPicId());
+            // 插入后，yunPicture.getPicId() 会自动包含生成的ID，不需要再次查询
         }
 
         // 手动构建返回结果，避免BeanUtils.copyProperties的类型转换问题

@@ -62,6 +62,9 @@ public class FileManger {
      * @return 上传结果封装
      */
     public UploadPictureResult uploadPicture(MultipartFile multipartFile, String uploadPathPrefix) {
+        log.info("开始上传图片，文件名: {}, 大小: {}, 路径前缀: {}", 
+            multipartFile.getOriginalFilename(), multipartFile.getSize(), uploadPathPrefix);
+        
         // 1. 参数校验
         validPicture(multipartFile);
 
@@ -71,6 +74,8 @@ public class FileManger {
         String fileExtension = FileUtil.getSuffix(originFilename);
         String uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, fileExtension);
         String uploadPath = String.format("%s/%s", uploadPathPrefix, uploadFilename);
+        
+        log.info("生成上传路径: {}", uploadPath);
 
         File tempFile = null;
         try {
@@ -80,8 +85,17 @@ public class FileManger {
 
             // 4. 上传到云存储
             PutObjectResult putObjectResult = cosManger.putPictrueObj(uploadPath, tempFile);
+            log.info("上传到COS成功，putObjectResult: {}", putObjectResult);
+            
+            // 检查CI上传结果
+            if (putObjectResult.getCiUploadResult() == null) {
+                log.error("CI上传结果为空，putObjectResult: {}", putObjectResult);
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图片处理失败");
+            }
+            
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
-
+            log.info("获取到图片信息: width={}, height={}, format={}, ave={}", 
+                imageInfo.getWidth(), imageInfo.getHeight(), imageInfo.getFormat(), imageInfo.getAve());
 
             // 5. 封装返回结果
             UploadPictureResult result = new UploadPictureResult();
@@ -110,11 +124,13 @@ public class FileManger {
             result.setPicSize(FileUtil.size(tempFile));
             result.setUrl(cosConfig.getHost() + "/" + uploadPath);
             result.setPicColor(imageInfo.getAve());
+            log.info("MultipartFile上传完成，返回结果: {}", result);
             return result;
 
         } catch (Exception e) {
-            log.error("图片上传到对象存储失败", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");
+            log.error("MultipartFile图片上传到对象存储失败，文件名: {}, 路径: {}", 
+                multipartFile.getOriginalFilename(), uploadPath, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败: " + e.getMessage());
         } finally {
             deleteTempFile(tempFile);
         }
@@ -163,7 +179,17 @@ public class FileManger {
             //
             // 4. 上传到云存储
             PutObjectResult putObjectResult = cosManger.putPictrueObj(uploadPath, tempFile);
+            log.info("URL上传到COS成功，putObjectResult: {}", putObjectResult);
+            
+            // 检查CI上传结果
+            if (putObjectResult.getCiUploadResult() == null) {
+                log.error("URL上传CI结果为空，putObjectResult: {}", putObjectResult);
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图片处理失败");
+            }
+            
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
+            log.info("URL上传获取到图片信息: width={}, height={}, format={}, ave={}", 
+                imageInfo.getWidth(), imageInfo.getHeight(), imageInfo.getFormat(), imageInfo.getAve());
 
             // 5. 封装返回结果
             UploadPictureResult result = new UploadPictureResult();
@@ -172,6 +198,19 @@ public class FileManger {
             double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();
 
             result.setPicName(FileUtil.mainName(fileExtension));
+            //返回缩略图结果
+            ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
+            List<CIObject> objectList = processResults.getObjectList();
+            if (CollUtil.isNotEmpty(objectList)) {
+                CIObject comObj = objectList.get(0);
+                CIObject tubObj = comObj;
+                //如果没有生成缩略图则将原图地址给到缩略图
+                if (objectList.size() > 1) {
+                    tubObj = objectList.get(1);
+                }
+                //设置缩略图地址
+                result.setThumbnailUrl(cosConfig.getHost() + "/" + tubObj.getKey());
+            }
             result.setPicWidth(picWidth);
             result.setPicHeight(picHeight);
             result.setPicScale(picScale);
@@ -193,15 +232,21 @@ public class FileManger {
      * 校验文件
      */
     public void validPicture(MultipartFile multipartFile) {
+        log.info("开始校验文件，文件名: {}, 大小: {}", multipartFile.getOriginalFilename(), multipartFile.getSize());
+        
         ThrowUtils.throwIf(multipartFile == null, ErrorCode.PARAMS_ERROR, "文件不能为空");
 
         // 文件大小校验
         long fileSize = multipartFile.getSize();
+        log.info("文件大小: {} bytes, 限制: {} bytes", fileSize, MAX_FILE_SIZE);
         ThrowUtils.throwIf(fileSize > MAX_FILE_SIZE, ErrorCode.PARAMS_ERROR, "文件大小不能超过 2M");
 
         // 文件后缀校验
         String fileSuffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
+        log.info("文件后缀: {}, 允许的格式: {}", fileSuffix, ALLOWED_FORMATS);
         ThrowUtils.throwIf(!ALLOWED_FORMATS.contains(fileSuffix), ErrorCode.PARAMS_ERROR, "文件类型错误");
+        
+        log.info("文件校验通过");
     }
 
     /**

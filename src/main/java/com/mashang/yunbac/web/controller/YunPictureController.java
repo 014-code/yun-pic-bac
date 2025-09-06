@@ -75,6 +75,10 @@ public class YunPictureController {
     @PostMapping("/uploadPic")
 //    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, HttpServletRequest request, Long spaceId) {
+        log.info("=== Controller收到上传请求 ===");
+        log.info("Controller收到上传请求，file: {}, picId: {}, spaceId: {}", 
+            file != null ? file.getOriginalFilename() + " (size: " + file.getSize() + ")" : "null", picId, spaceId);
+        
         // 从请求头获取token
         String token = request.getHeader("Authorization");
         if (token == null || token.trim().isEmpty()) {
@@ -98,6 +102,41 @@ public class YunPictureController {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
         }
         return yunPictureService.uploadPic(file, picId, yunUser, null, spaceId);
+    }
+
+    @Operation(summary = "测试上传图片(模拟文件)")
+    @PostMapping("/testUploadPic")
+    public ResultTUtil<YunPictureVo> testUploadPic(HttpServletRequest request, Long spaceId) {
+        log.info("=== 测试上传图片方法 ===");
+        
+        // 从请求头获取token
+        String token = request.getHeader("Authorization");
+        if (token == null || token.trim().isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录或缺少token");
+        }
+
+        // 验证token并获取用户ID
+        boolean valid = JWTUtil.verifyToken(token);
+        if (!valid) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户认证失败");
+        }
+
+        Long userId = JWTUtil.getUserId(token);
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在或token过期");
+        }
+
+        // 从数据库获取完整的用户信息
+        YunUser yunUser = yunUserService.getById(userId);
+        if (yunUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户不存在");
+        }
+
+        // 创建一个测试图片URL
+        String testImageUrl = "https://picsum.photos/200/300";
+        log.info("使用测试图片URL: {}", testImageUrl);
+        
+        return yunPictureService.uploadPic(testImageUrl, null, yunUser, "测试图片", spaceId);
     }
 
     @Operation(summary = "url上传图片(并返回图片信息)")

@@ -11,6 +11,7 @@ import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -22,6 +23,7 @@ import java.util.List;
  * cos公共操作方法
  */
 @Service
+@Slf4j
 public class CosManger {
 
     @Resource
@@ -92,7 +94,13 @@ public class CosManger {
         //处理
         picOperations.setRules(rules);
         putObjectRequest.setPicOperations(picOperations);
-        return cosClient.putObject(putObjectRequest);
+        
+        log.info("开始上传图片到COS，key: {}, fileSize: {}", key, file.length());
+        PutObjectResult result = cosClient.putObject(putObjectRequest);
+        log.info("COS上传完成，result: {}", result);
+        log.info("CI上传结果: {}", result.getCiUploadResult());
+        
+        return result;
     }
 
     /**
