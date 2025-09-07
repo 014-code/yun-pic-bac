@@ -15,18 +15,21 @@ import com.mashang.yunbac.web.entity.domian.YunSpace;
 import com.mashang.yunbac.web.entity.domian.YunUser;
 import com.mashang.yunbac.web.entity.enums.ErrorCode;
 import com.mashang.yunbac.web.entity.enums.PicStatusEnum;
-import com.mashang.yunbac.web.entity.params.picture.CaptureParam;
-import com.mashang.yunbac.web.entity.params.picture.GetPictrueListParam;
-import com.mashang.yunbac.web.entity.params.picture.ReviewPicParam;
-import com.mashang.yunbac.web.entity.params.picture.UpdatePictrueParam;
+import com.mashang.yunbac.web.entity.params.common.CreateOutPaintingTaskRequest;
+import com.mashang.yunbac.web.entity.params.picture.*;
+import com.mashang.yunbac.web.entity.vo.common.CreateOutPaintingTaskResponse;
+import com.mashang.yunbac.web.entity.vo.common.GetOutPaintingTaskResponse;
 import com.mashang.yunbac.web.entity.vo.common.YunCategoryTagVo;
 import com.mashang.yunbac.web.entity.vo.picture.YunPictureUserVo;
 import com.mashang.yunbac.web.entity.vo.picture.YunPictureUserVos;
 import com.mashang.yunbac.web.entity.vo.picture.YunPictureVo;
 import com.mashang.yunbac.web.entity.vo.user.YunUserVo;
 import com.mashang.yunbac.web.exception.ThrowUtils;
+import com.mashang.yunbac.web.mapper.YunPictureMapper;
+import com.mashang.yunbac.web.mapper.YunUserMapper;
 import com.mashang.yunbac.web.service.impl.YunSpaceServiceImpl;
 import com.mashang.yunbac.web.service.impl.YunUserServiceImpl;
+import com.mashang.yunbac.web.utils.ImageExpansionApiUtil;
 import com.mashang.yunbac.web.utils.JWTUtil;
 import com.mashang.yunbac.web.utils.ResultTUtil;
 import com.mashang.yunbac.web.utils.RowsTUtil;
@@ -70,15 +73,20 @@ public class YunPictureController {
     private YunSpaceServiceImpl yunSpaceService;
     @Resource
     private TransactionTemplate transactionTemplate;
+    @Autowired
+    private YunPictureMapper yunPictureMapper;
+    @Resource
+    private ImageExpansionApiUtil imageExpansionApiUtil;
+    @Autowired
+    private YunUserMapper yunUserMapper;
 
     @Operation(summary = "上传图片(并返回图片信息)")
     @PostMapping("/uploadPic")
 //    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public ResultTUtil<YunPictureVo> uploadPic(MultipartFile file, Long picId, HttpServletRequest request, Long spaceId) {
         log.info("=== Controller收到上传请求 ===");
-        log.info("Controller收到上传请求，file: {}, picId: {}, spaceId: {}", 
-            file != null ? file.getOriginalFilename() + " (size: " + file.getSize() + ")" : "null", picId, spaceId);
-        
+        log.info("Controller收到上传请求，file: {}, picId: {}, spaceId: {}", file != null ? file.getOriginalFilename() + " (size: " + file.getSize() + ")" : "null", picId, spaceId);
+
         // 从请求头获取token
         String token = request.getHeader("Authorization");
         if (token == null || token.trim().isEmpty()) {
@@ -108,7 +116,7 @@ public class YunPictureController {
     @PostMapping("/testUploadPic")
     public ResultTUtil<YunPictureVo> testUploadPic(HttpServletRequest request, Long spaceId) {
         log.info("=== 测试上传图片方法 ===");
-        
+
         // 从请求头获取token
         String token = request.getHeader("Authorization");
         if (token == null || token.trim().isEmpty()) {
@@ -135,7 +143,7 @@ public class YunPictureController {
         // 创建一个测试图片URL
         String testImageUrl = "https://picsum.photos/200/300";
         log.info("使用测试图片URL: {}", testImageUrl);
-        
+
         return yunPictureService.uploadPic(testImageUrl, null, yunUser, "测试图片", spaceId);
     }
 
@@ -410,6 +418,43 @@ public class YunPictureController {
     @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
     public ResultTUtil<List<YunPictureVo>> searchByColor(Long spaceId, String color, HttpServletRequest request) {
         return yunPictureService.searchByColor(spaceId, color, request);
+    }
+
+    @Operation(summary = "创建ai扩图任务")
+    @PostMapping("/ai/create")
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public ResultTUtil aiCreate(@RequestBody @Validated CreatePictureOutPaintingTaskRequest params, HttpServletRequest request) {
+        ThrowUtils.throwIf(params == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(params.getPictureId() == null, ErrorCode.NOT_FOUND_ERROR);
+        //校验用户权限-只有管理员和图片创建者可以
+        String authorization = request.getHeader("Authorization");
+        Long userId = JWTUtil.getUserId(authorization);
+        YunUser yunUser = yunUserMapper.selectById(userId);
+        YunPicture yunPicture = yunPictureMapper.selectById(params.getPictureId());
+        if (!yunUser.getUserId().equals(yunPicture.getUserId()) && !yunUser.getRole().equals(UserConstant.ADMIN_ROLE)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无该图片的扩图权限");
+        }
+        CreateOutPaintingTaskRequest createOutPaintingTaskRequest = new CreateOutPaintingTaskRequest();
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(yunPicture.getUrl());
+        createOutPaintingTaskRequest.setInput(input);
+        BeanUtils.copyProperties(params, createOutPaintingTaskRequest);
+        //创建任务
+        CreateOutPaintingTaskResponse outPaintingTask = imageExpansionApiUtil.createOutPaintingTask(createOutPaintingTaskRequest);
+        if (outPaintingTask == null) {
+            return new ResultTUtil().success("创建成功");
+        } else {
+            return new ResultTUtil().error("创建失败");
+        }
+    }
+
+    @Operation(summary = "查询ai扩图任务")
+    @GetMapping("/ai/query")
+//    @AuthCheck(mustRole = UserConstant.USER_LOGIN_STATE)
+    public ResultTUtil<GetOutPaintingTaskResponse> aiQuery(String taskId, HttpServletRequest request) {
+        ThrowUtils.throwIf(taskId == null, ErrorCode.NOT_FOUND_ERROR);
+        GetOutPaintingTaskResponse outPaintingTask = imageExpansionApiUtil.getOutPaintingTask(taskId);
+        return new ResultTUtil().success("查询成功", outPaintingTask);
     }
 
     /**
